@@ -57,33 +57,48 @@ const handleDownloadPDF = async () => {
       throw new Error('Resume content not found');
     }
 
-    // Add loading state to the element
-    element.style.opacity = '0.8';
+    // Store original styles
+    const originalOverflow = element.style.overflow;
+    const originalHeight = element.style.height;
     
+    // Set styles for PDF generation
+    element.style.overflow = 'visible';
+    element.style.height = 'auto';
+
+    // Wait for images and fonts to load
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const canvas = await html2canvas(element, {
-      scale: 2, // Higher scale for better quality
+      scale: 3, // Higher scale for better quality
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: '#ffffff',
       logging: false,
-      width: element.scrollWidth,
-      height: element.scrollHeight,
-      onclone: (clonedDoc) => {
-        // Ensure all styles are applied in the clone
+      removeContainer: true,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      onclone: (clonedDoc, element) => {
+        // Ensure all content is visible in the clone
         const clonedElement = clonedDoc.getElementById('resume-content');
         if (clonedElement) {
-          clonedElement.style.width = '210mm';
-          clonedElement.style.height = 'auto';
+          // Make sure all sections are visible
+          const sections = clonedElement.querySelectorAll('section, div');
+          sections.forEach(section => {
+            (section as HTMLElement).style.opacity = '1';
+            (section as HTMLElement).style.visibility = 'visible';
+            (section as HTMLElement).style.display = 'block';
+          });
         }
       }
     });
 
-    // Reset opacity
-    element.style.opacity = '1';
+    // Restore original styles
+    element.style.overflow = originalOverflow;
+    element.style.height = originalHeight;
 
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const imgData = canvas.toDataURL('image/png', 1.0);
     
-    // Create PDF with proper dimensions
+    // Create PDF
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -91,38 +106,31 @@ const handleDownloadPDF = async () => {
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
     
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 0; // Start from top
-    
-    pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-    pdf.save(`${resume?.data.personalInfo.fullName || 'resume'}_${Date.now()}.pdf`);
+    // Calculate dimensions to fit the PDF
+    const ratio = imgHeight / imgWidth;
+    let width = pdfWidth;
+    let height = width * ratio;
+
+    // If the image is too tall, scale it down
+    if (height > pdfHeight) {
+      height = pdfHeight;
+      width = height / ratio;
+    }
+
+    const x = (pdfWidth - width) / 2;
+    const y = (pdfHeight - height) / 2;
+
+    pdf.addImage(imgData, 'PNG', x, y, width, height);
+    pdf.save(`${resume?.data.personalInfo.fullName || 'resume'}.pdf`);
     
     toast.success('PDF downloaded successfully!');
   } catch (error) {
     console.error('Error generating PDF:', error);
     
-    // Fallback: Create a simple text-based PDF
+    // Fallback: Enhanced text-based PDF
     try {
-      const pdf = new jsPDF();
-      
-      // Add basic resume content as text
-      pdf.setFontSize(20);
-      pdf.text(resume?.data.personalInfo.fullName || 'Resume', 20, 20);
-      
-      pdf.setFontSize(12);
-      pdf.text(`Email: ${resume?.data.personalInfo.email || ''}`, 20, 35);
-      pdf.text(`Phone: ${resume?.data.personalInfo.phone || ''}`, 20, 45);
-      pdf.text(`Location: ${resume?.data.personalInfo.location || ''}`, 20, 55);
-      
-      if (resume?.data.summary) {
-        pdf.text('Summary:', 20, 70);
-        const splitSummary = pdf.splitTextToSize(resume.data.summary, 170);
-        pdf.text(splitSummary, 20, 80);
-      }
-      
-      pdf.save(`${resume?.data.personalInfo.fullName || 'resume'}_simple.pdf`);
-      toast.success('Simple PDF downloaded!');
+      generateComprehensivePDF();
+      toast.success('Text-based PDF downloaded!');
     } catch (fallbackError) {
       console.error('Fallback PDF failed:', fallbackError);
       toast.error('Failed to download PDF. Please try printing instead.');
@@ -132,6 +140,260 @@ const handleDownloadPDF = async () => {
   }
 };
 
+// Enhanced text-based PDF generator
+const generateComprehensivePDF = () => {
+  if (!resume) return;
+
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const { personalInfo, summary, experience, education, skills, projects, certifications } = resume.data;
+  
+  let yPosition = 20;
+  const margin = 20;
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const maxWidth = pageWidth - (margin * 2);
+
+  // Title
+  pdf.setFontSize(24);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(personalInfo.fullName, margin, yPosition);
+  yPosition += 10;
+
+  // Contact Info
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  const contactInfo = [
+    personalInfo.email,
+    personalInfo.phone, 
+    personalInfo.location,
+    personalInfo.linkedin ? `LinkedIn: ${personalInfo.linkedin}` : '',
+    personalInfo.github ? `GitHub: ${personalInfo.github}` : '',
+    personalInfo.website ? `Portfolio: ${personalInfo.website}` : ''
+  ].filter(Boolean).join(' | ');
+  
+  pdf.text(contactInfo, margin, yPosition, { maxWidth });
+  yPosition += 8;
+
+  // Summary
+  if (summary) {
+    yPosition += 5;
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('PROFESSIONAL SUMMARY', margin, yPosition);
+    yPosition += 8;
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    const splitSummary = pdf.splitTextToSize(summary, maxWidth);
+    pdf.text(splitSummary, margin, yPosition);
+    yPosition += (splitSummary.length * 5) + 10;
+  }
+
+  // Experience
+  if (experience && experience.length > 0) {
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('PROFESSIONAL EXPERIENCE', margin, yPosition);
+    yPosition += 10;
+
+    experience.forEach((exp, index) => {
+      // Check for page break
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${exp.position}`, margin, yPosition);
+      yPosition += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      const companyText = `${exp.company} | ${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}`;
+      pdf.text(companyText, margin, yPosition);
+      yPosition += 5;
+
+      if (exp.description) {
+        const splitDesc = pdf.splitTextToSize(exp.description, maxWidth);
+        pdf.text(splitDesc, margin, yPosition);
+        yPosition += (splitDesc.length * 5);
+      }
+
+      if (exp.technologies && exp.technologies.length > 0) {
+        const techText = `Technologies: ${exp.technologies.join(', ')}`;
+        pdf.text(techText, margin, yPosition);
+        yPosition += 5;
+      }
+
+      yPosition += 8; // Space between experiences
+    });
+  }
+
+  // Education
+  if (education && education.length > 0) {
+    if (yPosition > 220) {
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('EDUCATION', margin, yPosition);
+    yPosition += 10;
+
+    education.forEach((edu, index) => {
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${edu.degree}`, margin, yPosition);
+      yPosition += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      const eduText = `${edu.institution} | ${edu.startDate} - ${edu.current ? 'Present' : edu.endDate}`;
+      pdf.text(eduText, margin, yPosition);
+      yPosition += 5;
+
+      if (edu.field) {
+        pdf.text(`Field: ${edu.field}`, margin, yPosition);
+        yPosition += 5;
+      }
+
+      if (edu.gpa) {
+        pdf.text(`GPA: ${edu.gpa}`, margin, yPosition);
+        yPosition += 5;
+      }
+
+      yPosition += 5;
+    });
+  }
+
+  // Skills
+  if (skills && skills.length > 0) {
+    if (yPosition > 220) {
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('SKILLS', margin, yPosition);
+    yPosition += 10;
+
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    
+    const skillGroups: { [key: string]: string[] } = {};
+    skills.forEach((skill) => {
+      if (!skillGroups[skill.category]) {
+        skillGroups[skill.category] = [];
+      }
+      skillGroups[skill.category].push(`${skill.name} (${skill.level}/5)`);
+    });
+
+    Object.entries(skillGroups).forEach(([category, skillNames]) => {
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${category}:`, margin, yPosition);
+      yPosition += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      const skillsText = skillNames.join(', ');
+      const splitSkills = pdf.splitTextToSize(skillsText, maxWidth);
+      pdf.text(splitSkills, margin, yPosition);
+      yPosition += (splitSkills.length * 5) + 5;
+    });
+  }
+
+  // Projects
+  if (projects && projects.length > 0) {
+    if (yPosition > 220) {
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('PROJECTS', margin, yPosition);
+    yPosition += 10;
+
+    projects.forEach((project, index) => {
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(project.name, margin, yPosition);
+      yPosition += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      if (project.description) {
+        const splitDesc = pdf.splitTextToSize(project.description, maxWidth);
+        pdf.text(splitDesc, margin, yPosition);
+        yPosition += (splitDesc.length * 5);
+      }
+
+      if (project.technologies && project.technologies.length > 0) {
+        const techText = `Technologies: ${project.technologies.join(', ')}`;
+        pdf.text(techText, margin, yPosition);
+        yPosition += 5;
+      }
+
+      if (project.link) {
+        pdf.text(`Link: ${project.link}`, margin, yPosition);
+        yPosition += 5;
+      }
+
+      yPosition += 8;
+    });
+  }
+
+  // Certifications
+  if (certifications && certifications.length > 0) {
+    if (yPosition > 220) {
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('CERTIFICATIONS', margin, yPosition);
+    yPosition += 10;
+
+    certifications.forEach((cert, index) => {
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(cert.name, margin, yPosition);
+      yPosition += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Issuer: ${cert.issuer} | Date: ${cert.date}`, margin, yPosition);
+      yPosition += 5;
+
+      if (cert.link) {
+        pdf.text(`Verify: ${cert.link}`, margin, yPosition);
+        yPosition += 5;
+      }
+
+      yPosition += 5;
+    });
+  }
+
+  pdf.save(`${personalInfo.fullName.replace(/\s+/g, '_')}_Resume.pdf`);
+};
   const handleShare = async () => {
     try {
       const shareUrl = `${window.location.origin}/resumes/${id}`;
@@ -155,10 +417,10 @@ const handleDownloadPDF = async () => {
     }
   };
 
-  const handleChangeTemplate = (template: string) => {
-    toast.success(`Template changed to ${template}`);
-    // Template change logic will be implemented later
-  };
+//   const handleChangeTemplate = (template: string) => {
+//     toast.success(`Template changed to ${template}`);
+//     // Template change logic will be implemented later
+//   };
 
   if (loading) {
     return (
@@ -467,22 +729,64 @@ const handleDownloadPDF = async () => {
      
 
       {/* Print Styles */}
-      <style jsx global>{`
-        @media print {
-          body {
-            background: white !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-          .print\\:shadow-none {
-            box-shadow: none !important;
-          }
-          .print\\:bg-blue-600 {
-            background: #2563eb !important;
-          }
-        }
-      `}</style>
+     <style jsx global>{`
+  @media print {
+    @page {
+      margin: 0.5in;
+      size: letter;
+    }
+    
+    body {
+      background: white !important;
+      font-size: 12pt;
+      line-height: 1.4;
+    }
+    
+    /* Hide everything except resume */
+    body * {
+      visibility: hidden;
+    }
+    
+    #resume-content,
+    #resume-content * {
+      visibility: visible;
+    }
+    
+    #resume-content {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      background: white !important;
+    }
+    
+    /* Ensure proper page breaks */
+    section {
+      page-break-inside: avoid;
+    }
+    
+    /* Improve text readability */
+    h1, h2, h3 {
+      color: #000 !important;
+    }
+    
+    /* Ensure backgrounds print */
+    .bg-blue-600 {
+      background-color: #2563eb !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .text-blue-100 {
+      color: #dbeafe !important;
+    }
+  }
+`}</style>
+
+
     </div>
   );
 }
