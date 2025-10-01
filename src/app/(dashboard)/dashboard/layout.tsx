@@ -38,6 +38,7 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Overview', icon: '📊' },
     { href: '/dashboard/blogs', label: 'Blogs', icon: '📝' },
     { href: '/dashboard/projects', label: 'Projects', icon: '💼' },
+     { href: '/dashboard/resumes', label: 'Resumes', icon: '📄' },
     { href: '/dashboard/profile', label: 'Profile', icon: '👤' },
   ];
 

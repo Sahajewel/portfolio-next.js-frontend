@@ -51,3 +51,27 @@ export const userAPI = {
   updateUser: (id: string, data: any) => api.patch(`/user/${id}`, data),
   deleteUser: (id: string) => api.delete(`/user/${id}`),
 };
+// lib/api.ts - Resume API যোগ করো
+
+export const resumeAPI = {
+  create: async (data: any) => {
+    const response = await api.post('/resume/create-resume', data);
+    return response;
+  },
+  getAll: async () => {
+    const response = await api.get('/resume');
+    return response;
+  },
+  getById: async (id: string) => {
+    const response = await api.get(`/resume/${id}`);
+    return response;
+  },
+  update: async (id: string, data: any) => {
+    const response = await api.patch(`/resume/${id}`, data);
+    return response;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete(`/resume/${id}`);
+    return response;
+  },
+};
