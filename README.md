@@ -4,8 +4,8 @@ A modern, responsive portfolio website built with Next.js, TypeScript, and Tailw
 
 ## 🚀 Live Demo
 
-- **Frontend URL**: [Your Vercel/Netlify URL]
-- **Backend API**: [Your Backend URL]
+- **Frontend URL**: [https://portfolio-frontend-five-blond.vercel.app]
+- **Backend API**: [https://portfolio-backend-nu-two.vercel.app]
 
 ## ✨ Features
 
@@ -54,8 +54,8 @@ Before running this project, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/portfolio-frontend.git
-cd portfolio-frontend
+git clone https://github.com/Sahajewel/portfolio-next.js-frontend.git
+cd portfolio-next.js-frontend
 ```
 
 ### 2. Install Dependencies
@@ -71,8 +71,8 @@ yarn install
 Create a `.env.local` file in the root directory and add:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+NEXTAUTH_URL=http://localhost:3000
 ```
 
 ### 4. Run Development Server
@@ -89,7 +89,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```bash
 npm run build
-npm run start
+npm  start
 # or
 yarn build
 yarn start
@@ -112,18 +112,16 @@ portfolio-frontend/
 │   │   ├── login.tsx           # Admin login
 │   │   └── dashboard/          # Admin dashboard
 │   ├── components/     # Reusable components
-│   │   ├── Layout/
-│   │   ├── Blog/
-│   │   ├── Dashboard/
-│   │   └── UI/
+│   │   ├── login/
+│   │   ├── public/
+│   │   ├── templates
 │   ├── lib/            # Utility functions
 │   ├── hooks/          # Custom React hooks
-│   ├── context/        # React Context
-│   ├── types/          # TypeScript types
-│   └── styles/         # Global styles
+│   ├── middleware/        # React Context
+│   ├── types/          # TypeScript types        
 ├── .env.local          # Environment variables
-├── next.config.js      # Next.js configuration
-├── tailwind.config.js  # Tailwind CSS configuration
+├── next.config.ts      # Next.js configuration
+├── postcss.config.mjs  # Tailwind CSS configuration
 ├── tsconfig.json       # TypeScript configuration
 └── package.json        # Dependencies
 ```
@@ -133,59 +131,20 @@ portfolio-frontend/
 For testing the admin dashboard, use these credentials:
 
 - **Email**: `admin@portfolio.com`
+- or
+- **username**: `admin_portfolio`
 - **Password**: `Admin@123456`
 
-## 🎨 Key Features Implementation
-
-### ISR (Incremental Static Regeneration)
-
-**All Blogs Page:**
-```typescript
-export async function getStaticProps() {
-  const res = await fetch(`${API_URL}/blogs`);
-  const blogs = await res.json();
-  
-  return {
-    props: { blogs },
-    revalidate: 60 // Revalidate every 60 seconds
-  };
-}
-```
-
-**Individual Blog Page:**
-```typescript
-export async function getStaticPaths() {
-  const res = await fetch(`${API_URL}/blogs`);
-  const blogs = await res.json();
-  
-  const paths = blogs.map((blog) => ({
-    params: { id: blog.id.toString() }
-  }));
-  
-  return { paths, fallback: 'blocking' };
-}
-
-export async function getStaticProps({ params }) {
-  const res = await fetch(`${API_URL}/blogs/${params.id}`);
-  const blog = await res.json();
-  
-  return {
-    props: { blog },
-    revalidate: 60
-  };
-}
-```
 
 ### Authentication Flow
 
 1. User logs in via `/login` page
-2. JWT token stored in localStorage/httpOnly cookie
+2. JWT token stored in httpOnly cookie
 3. Protected routes check for valid token
 4. Automatic redirect to login if unauthorized
 
 ### Error Handling
 
-- Form validation with React Hook Form
 - API error handling with try-catch blocks
 - User-friendly error messages via toast notifications
 - 404 and error pages for better UX
@@ -195,7 +154,7 @@ export async function getStaticProps({ params }) {
 ### Deploy to Vercel
 
 1. Push code to GitHub
-2. Connect repository to Vercel
+2. Deploy on vercel
 3. Add environment variables in Vercel dashboard
 4. Deploy automatically on push
 
@@ -209,23 +168,9 @@ vercel
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
-- `npm run start` - Start production server
+- `npm start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
 
-## 🧪 Testing Checklist
-
-- [ ] All public pages load correctly
-- [ ] Blog list displays with ISR
-- [ ] Individual blog pages generate dynamically
-- [ ] Projects showcase loads properly
-- [ ] Admin login works with correct credentials
-- [ ] Dashboard is protected (redirects if not logged in)
-- [ ] CRUD operations for blogs work correctly
-- [ ] Toast notifications appear for all actions
-- [ ] Form validation works properly
-- [ ] Responsive design on all devices
-- [ ] No console errors or warnings
 
 ## 🤝 Contributing
 
@@ -238,16 +183,15 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 **Your Name**
-- Portfolio: [your-portfolio-url]
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Email: your.email@example.com
+- Portfolio: [https://sahajewel.com]
+- GitHub: [@yourusername](https://github.com/Sahajewel)
+- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/sahajewelkumar)
+- Email: jewelsaha072@gmail.com
 
 ## 🙏 Acknowledgments
 
 - Next.js Documentation
 - Tailwind CSS
-- React Quill
 - Vercel for hosting
 
 ---
