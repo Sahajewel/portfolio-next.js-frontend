@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/dashboard/blogs/new/page.tsx (Improved slug handling)
+// app/dashboard/blogs/new/page.tsx (Improved with proper TagsInput)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { blogAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
+import TagsInput from '@/components/TagaInput';
+// import TagsInput from '@/components/TagsInput';
 
 // Function to generate slug from title
 const generateSlug = (title: string) => {
@@ -92,8 +94,7 @@ export default function NewBlogPage() {
     }));
   };
 
-  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+  const handleTagsChange = (tags: string[]) => {
     setFormData(prev => ({
       ...prev,
       tags
@@ -129,163 +130,179 @@ export default function NewBlogPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Create New Blog</h1>
+    <div className="space-y-6">
+      {/* Header Section - Mobile Optimized */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create New Blog</h1>
+          <p className="text-gray-600 text-sm mt-1">Write and publish your blog post</p>
+        </div>
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900"
+          className="text-gray-600 hover:text-gray-900 font-medium w-full sm:w-auto text-center sm:text-left"
         >
-          ← Back
+          ← Back to Blogs
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              Title *
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 space-y-6">
+        {/* Title */}
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            Title *
+          </label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            value={formData.title}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            placeholder="Enter blog title"
+          />
+        </div>
+
+        {/* Slug */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
+              Slug *
             </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="Enter blog title"
-            />
+            {isSlugManual && (
+              <button
+                type="button"
+                onClick={resetSlugToAuto}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Reset to auto-generate
+              </button>
+            )}
           </div>
+          <input
+            type="text"
+            id="slug"
+            name="slug"
+            required
+            value={formData.slug}
+            onChange={handleSlugChange}
+            onFocus={handleSlugFocus}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            placeholder="URL-friendly slug"
+          />
+          <p className="mt-2 text-sm text-gray-500">
+            {isSlugManual ? (
+              "Manual mode - you can customize the slug"
+            ) : (
+              "Auto-generate mode - slug updates with title"
+            )}
+            <br />
+            URL: <span className="text-blue-600">/blogs/{formData.slug || 'your-slug'}</span>
+          </p>
+        </div>
 
-          <div>
-            <div className="flex justify-between items-center">
-              <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
-                Slug *
-              </label>
-              {isSlugManual && (
-                <button
-                  type="button"
-                  onClick={resetSlugToAuto}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Reset to auto-generate
-                </button>
-              )}
-            </div>
-            <input
-              type="text"
-              id="slug"
-              name="slug"
-              required
-              value={formData.slug}
-              onChange={handleSlugChange}
-              onFocus={handleSlugFocus}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="URL-friendly slug"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              {isSlugManual ? (
-                "Manual mode - you can customize the slug"
-              ) : (
-                "Auto-generate mode - slug updates with title"
-              )}
-              <br />
-              URL: /blogs/{formData.slug || 'your-slug'}
-            </p>
-          </div>
+        {/* Excerpt */}
+        <div>
+          <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 mb-2">
+            Excerpt
+          </label>
+          <textarea
+            id="excerpt"
+            name="excerpt"
+            rows={3}
+            value={formData.excerpt}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            placeholder="Brief description of your blog post"
+          />
+        </div>
 
-          <div>
-            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700">
-              Excerpt
-            </label>
-            <textarea
-              id="excerpt"
-              name="excerpt"
-              rows={3}
-              value={formData.excerpt}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="Brief description of your blog post"
-            />
-          </div>
+        {/* Content */}
+        <div>
+          <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+            Content *
+          </label>
+          <textarea
+            id="content"
+            name="content"
+            rows={12}
+            required
+            value={formData.content}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-vertical"
+            placeholder="Write your blog content here..."
+          />
+        </div>
 
-          <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-              Content *
-            </label>
-            <textarea
-              id="content"
-              name="content"
-              rows={10}
-              required
-              value={formData.content}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="Write your blog content here..."
-            />
-          </div>
+        {/* Tags - Using the new TagsInput component */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tags
+          </label>
+          <TagsInput
+            tags={formData.tags}
+            onChange={handleTagsChange}
+            placeholder="Type and press Enter, Space or Comma to add tags"
+          />
+          <p className="mt-2 text-sm text-gray-500">
+            Press Enter, Space or Comma to add tags. Click × to remove.
+          </p>
+        </div>
 
-          <div>
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-              Tags (comma separated)
-            </label>
-            <input
-              type="text"
-              id="tags"
-              name="tags"
-              value={formData.tags.join(', ')}
-              onChange={handleTagsChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="Next.js, React, TypeScript"
-            />
-          </div>
+        {/* Thumbnail */}
+        <div>
+          <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-2">
+            Thumbnail URL
+          </label>
+          <input
+            type="url"
+            id="thumbnail"
+            name="thumbnail"
+            value={formData.thumbnail}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            placeholder="https://example.com/image.jpg"
+          />
+        </div>
 
-          <div>
-            <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700">
-              Thumbnail URL
-            </label>
-            <input
-              type="url"
-              id="thumbnail"
-              name="thumbnail"
-              value={formData.thumbnail}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+        {/* Publish Checkbox */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="published"
+            name="published"
+            checked={formData.published}
+            onChange={(e) => setFormData(prev => ({ ...prev, published: e.target.checked }))}
+            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="published" className="ml-3 block text-sm font-medium text-gray-900">
+            Publish immediately
+          </label>
+        </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="published"
-              name="published"
-              checked={formData.published}
-              onChange={(e) => setFormData(prev => ({ ...prev, published: e.target.checked }))}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="published" className="ml-2 block text-sm text-gray-900">
-              Publish immediately
-            </label>
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={loading || !session?.user?.id}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Creating...' : 'Create Blog'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <button
+            type="submit"
+            disabled={loading || !session?.user?.id}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors duration-200 flex-1"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mr-2"></div>
+                Creating...
+              </div>
+            ) : (
+              'Create Blog'
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 font-medium transition-colors duration-200 flex-1"
+          >
+            Cancel
+          </button>
         </div>
       </form>
     </div>
