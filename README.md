@@ -184,8 +184,8 @@ This project is licensed under the MIT License.
 
 **Your Name**
 - Portfolio: [https://sahajewel.com]
-- GitHub: [@yourusername](https://github.com/Sahajewel)
-- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/sahajewelkumar)
+- GitHub: [Saha Jewel Kumar](https://github.com/Sahajewel)
+- LinkedIn: [Saha Jewel Kumar](https://www.linkedin.com/in/sahajewelkumar)
 - Email: jewelsaha072@gmail.com
 
 ## 🙏 Acknowledgments
