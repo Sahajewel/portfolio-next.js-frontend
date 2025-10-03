@@ -1,45 +1,59 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { blogAPI, projectAPI } from '@/lib/api';
 import { Blog, Project } from '@/types';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 
-export const revalidate = 3600;
+export default function Home() {
+  const { data: session } = useSession();
+  const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
-async function getFeaturedBlogs(): Promise<Blog[]> {
-  try {
-    const response = await blogAPI.getAll();
-    return response.data.data.slice(0, 3);
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    return [];
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [blogsResponse, projectsResponse] = await Promise.all([
+          blogAPI.getAll(),
+          projectAPI.getAll()
+        ]);
+
+        const blogs = blogsResponse.data.data || blogsResponse.data || [];
+        const projects = projectsResponse.data.data || projectsResponse.data || [];
+        
+        setFeaturedBlogs(blogs.slice(0, 3));
+        setFeaturedProjects(projects.filter((project: Project) => project.featured).slice(0, 3));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex justify-center items-center min-h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
   }
-}
-
-async function getFeaturedProjects(): Promise<Project[]> {
-  try {
-    const response = await projectAPI.getAll();
-    const projects = response.data.data;
-    return projects.filter((project: Project) => project.featured).slice(0, 3);
-  } catch (error) {
-    console.error('Error fetching projects:', error);
-    return [];
-  }
-}
-
-export default async function Home() {
-  const [featuredBlogs, featuredProjects] = await Promise.all([
-    getFeaturedBlogs(),
-    getFeaturedProjects(),
-  ]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Hero Section */}
       <section className="text-center py-20">
         <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
-          Hi, I&apos;m{' '}
+         Hello{' '}
           <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Your Name
+           {session?.user?.name}
           </span>
         </h1>
         <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">

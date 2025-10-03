@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'My Portfolio - Full Stack Developer',
   description: 'Personal portfolio showcasing my projects and blog',
+  icons: {
+    icon: 'favicon.ico'
+  }
 };
 
 export default function RootLayout({

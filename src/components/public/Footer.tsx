@@ -40,18 +40,18 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Connect</h3>
             <ul className="space-y-2">
               <li>
-                <a href="https://github.com" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://github.com/Sahajewel" className="text-gray-400 hover:text-white transition-colors">
                   GitHub
                 </a>
               </li>
               <li>
-                <a href="https://linkedin.com" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://linkedin.com/in/sahajewelkumar" className="text-gray-400 hover:text-white transition-colors">
                   LinkedIn
                 </a>
               </li>
               <li>
-                <a href="mailto:hello@example.com" className="text-gray-400 hover:text-white transition-colors">
-                  Email
+                <a href="https://www.instagram.com/sahajewelkumarbd" className="text-gray-400 hover:text-white transition-colors">
+                  Instagram
                 </a>
               </li>
             </ul>
