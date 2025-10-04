@@ -77,7 +77,7 @@ export interface Experience {
   endDate?: string;
   current: boolean;
   description: string;
- 
+  technologies: string[];
 }
 
 export interface Education {
@@ -102,6 +102,7 @@ export interface ProjectItem {
   id: string;
   name: string;
   description: string;
+  technologies: string[];
   link?: string;
 }
 

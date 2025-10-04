@@ -194,7 +194,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Account Summary */}
-        <div className="space-y-6">
+        {/* <div className="space-y-6">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Account Summary
@@ -256,7 +256,7 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-        </div>
+        {/* </div> */}
       </div>
     </div>
   );
