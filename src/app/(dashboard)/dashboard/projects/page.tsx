@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { projectAPI } from '@/lib/api';
 import { Project } from '@/types';
+import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 export default function DashboardProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -21,22 +23,55 @@ export default function DashboardProjectsPage() {
       setProjects(projectsData);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      toast.error('Failed to fetch projects');
     } finally {
       setLoading(false);
     }
   };
 
   const deleteProject = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this project?')) {
-      return;
-    }
+    const projectToDelete = projects.find(project => project.id === id);
+    
+    toast((t) => (
+      <div className="flex flex-col space-y-4 bg-white p-5">
+        <div className="text-lg font-semibold text-gray-900">
+          Delete Project?
+        </div>
+        <div className="text-gray-600">
+          Are you sure you want to delete &quot;{projectToDelete?.title}&quot;? This action cannot be undone.
+        </div>
+        <div className="flex justify-end space-x-3 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await handleDeleteConfirm(id);
+            }}
+            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 10000,
+      position: 'top-center',
+    });
+  };
 
+  const handleDeleteConfirm = async (id: string) => {
     try {
       await projectAPI.delete(id);
       setProjects(projects.filter(project => project.id !== id));
+      toast.success('Project deleted successfully');
     } catch (error) {
       console.error('Error deleting project:', error);
-      alert('Failed to delete project');
+      toast.error('Failed to delete project');
     }
   };
 
@@ -48,9 +83,14 @@ export default function DashboardProjectsPage() {
           ? { ...project, featured: !currentlyFeatured }
           : project
       ));
+      toast.success(
+        currentlyFeatured 
+          ? 'Project removed from featured' 
+          : 'Project featured successfully'
+      );
     } catch (error) {
       console.error('Error updating project:', error);
-      alert('Failed to update project');
+      toast.error('Failed to update project');
     }
   };
 
@@ -124,9 +164,11 @@ export default function DashboardProjectsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {project.thumbnail && (
-                          <img
+                          <Image
                             src={project.thumbnail}
                             alt={project.title}
+                            height={12}
+                            width={12}
                             className="h-12 w-12 rounded-lg object-cover mr-4"
                           />
                         )}
@@ -180,9 +222,10 @@ export default function DashboardProjectsPage() {
                         {project.githubUrl && (
                           <div className="flex items-center">
                             <span className="mr-2">💻</span>
-                            <span>GitHub</span>
+                            <span>GitHub </span>
                           </div>
                         )}
+                       
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
@@ -218,9 +261,11 @@ export default function DashboardProjectsPage() {
               <div key={project.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="flex items-start gap-4 mb-4">
                   {project.thumbnail && (
-                    <img
+                    <Image
                       src={project.thumbnail}
                       alt={project.title}
+                      height={16}
+                      width={16}
                       className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
                     />
                   )}
@@ -274,7 +319,13 @@ export default function DashboardProjectsPage() {
                   {project.githubUrl && (
                     <div className="flex items-center">
                       <span className="mr-1">💻</span>
-                      <span>GitHub</span>
+                      <span>GitHub Frontend</span>
+                    </div>
+                  )}
+                  {project.githubUrl && (
+                    <div className="flex items-center">
+                      <span className="mr-1">💻</span>
+                      <span>GitHub Backend</span>
                     </div>
                   )}
                 </div>

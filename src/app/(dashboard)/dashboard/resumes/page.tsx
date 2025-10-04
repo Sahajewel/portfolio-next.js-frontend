@@ -37,10 +37,41 @@ export default function ResumesPage() {
   };
 
   const deleteResume = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this resume?')) {
-      return;
-    }
+    const resumeToDelete = resumes.find(resume => resume.id === id);
+    
+    toast((t) => (
+      <div className="flex flex-col space-y-4 bg-white p-4">
+        <div className="text-lg font-semibold text-gray-900">
+          Delete Resume?
+        </div>
+        <div className="text-gray-600">
+          Are you sure you want to delete the resume for &quot;{resumeToDelete?.data.personalInfo?.fullName || 'Untitled Resume'}&quot;? This action cannot be undone.
+        </div>
+        <div className="flex justify-end space-x-3 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await handleDeleteConfirm(id);
+            }}
+            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 10000,
+      position: 'top-center',
+    });
+  };
 
+  const handleDeleteConfirm = async (id: string) => {
     try {
       await resumeAPI.delete(id);
       toast.success('Resume deleted successfully');
@@ -168,7 +199,7 @@ export default function ResumesPage() {
                   <Link
                     href={`/dashboard/resumes/${resume.id}`}
                     target="_blank"
-                  className="flex-1 bg-green-600 text-white text-center py-2 px-3 rounded text-sm hover:bg-green-700 transition-colors"
+                    className="flex-1 bg-green-600 text-white text-center py-2 px-3 rounded text-sm hover:bg-green-700 transition-colors"
                   >
                     View
                   </Link>

@@ -90,62 +90,67 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {featuredProjects.map((project) => (
-            <div
+            <Link
               key={project.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              href={`/projects/${project.id}`}
+              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow block"
             >
-              {project.thumbnail && (
-                <div className="relative w-full h-48">
-                  <Image
-                    src={project.thumbnail}
-                    alt={project.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {project.title}
-                </h3>
-                <p className="text-gray-600 mb-4 line-clamp-2">
-                  {project.description}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.technologies.slice(0, 3).map((tech) => (
-                    <span
-                      key={tech}
-                      className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-3">
-                  {project.liveUrl && (
-                    <a
-                      href={project.liveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      Live Demo
-                    </a>
-                  )}
-                  {project.githubUrl && (
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-600 hover:text-gray-700 font-medium"
-                    >
-                      GitHub
-                    </a>
-                  )}
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                {project.thumbnail && (
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={project.thumbnail}
+                      alt={project.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {project.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4 line-clamp-2">
+                    {project.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.technologies.slice(0, 3).map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-3">
+                    {project.liveUrl && (
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 font-medium"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Live Demo
+                      </a>
+                    )}
+                    {project.githubUrl && (
+                      <a
+                        href={project.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-gray-700 font-medium"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        GitHub
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

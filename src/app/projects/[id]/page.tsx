@@ -91,9 +91,10 @@ export default async function ProjectPage({ params }: PageProps) {
                   rel="noopener noreferrer"
                   className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors"
                 >
-                  View on GitHub
+                  View on GitHub 
                 </a>
               )}
+             
             </div>
 
             <div className="flex flex-wrap gap-2">

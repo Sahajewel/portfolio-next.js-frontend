@@ -233,7 +233,7 @@ export default function EditProjectPage({ params }: PageProps) {
 
           <div>
             <label htmlFor="githubUrl" className="block text-sm font-medium text-gray-700 mb-2">
-              GitHub URL
+              GitHub URL 
             </label>
             <input
               type="url"
@@ -245,6 +245,7 @@ export default function EditProjectPage({ params }: PageProps) {
               placeholder="https://github.com/username/repo"
             />
           </div>
+          
         </div>
 
         {/* Featured Checkbox */}

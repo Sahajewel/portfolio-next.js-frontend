@@ -27,7 +27,6 @@ const initialExperience: Experience = {
   endDate: '',
   current: false,
   description: '',
-  technologies: []
 };
 
 const initialEducation: Education = {
@@ -52,7 +51,6 @@ const initialProject: ProjectItem = {
   id: '',
   name: '',
   description: '',
-  technologies: [],
   link: ''
 };
 
@@ -530,16 +528,7 @@ export default function NewResumePage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Technologies</label>
-                      <input
-                        type="text"
-                        value={exp.technologies?.join(', ') || ''}
-                        onChange={(e) => updateExperience(index, 'technologies', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="React, Node.js, TypeScript (comma separated)"
-                      />
-                    </div>
+                   
                   </div>
                 ))}
               </div>
@@ -806,16 +795,7 @@ export default function NewResumePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Technologies</label>
-                        <input
-                          type="text"
-                          value={project.technologies?.join(', ') || ''}
-                          onChange={(e) => updateProject(index, 'technologies', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="React, Node.js, MongoDB (comma separated)"
-                        />
-                      </div>
+                    
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Project Link</label>
                         <input

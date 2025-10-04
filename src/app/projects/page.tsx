@@ -2,8 +2,15 @@ import Image from 'next/image';
 import { projectAPI } from '@/lib/api';
 import { Project } from '@/types';
 import Link from 'next/link';
+import { Metadata } from 'next';
+import ProjectCard from '@/components/ProjectCard';
+// Adjust the import path as needed
 
 export const revalidate = 3600;
+export const metadata: Metadata = {
+  title: 'My Portfolio - Projects',
+  description: 'My Portfolio Website is a modern full-stack personal portfolio built with Next.js, Express.js, and Prisma ORM. It features a fully functional dashboard for managing blog posts and showcasing real-time projects dynamically.'
+};
 
 async function getProjects(): Promise<Project[]> {
   try {
@@ -39,77 +46,9 @@ export default async function ProjectsPage() {
           <p className="text-gray-500">Projects will be added soon!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr">
           {projects.map((project) => (
-          <Link  key={project.id}
-              href={`/projects/${project.id}`}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow block">
-            <div
-              key={project.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-            >
-              {project.thumbnail && (
-                <div className="relative w-full h-48">
-                  <Image
-                    src={project.thumbnail}
-                    alt={project.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover"
-                  />
-                  {project.featured && (
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-yellow-500 text-white px-2 py-1 text-xs rounded-full">
-                        Featured
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {project.title}
-                </h3>
-                <p className="text-gray-600 mb-4 line-clamp-3">
-                  {project.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.technologies.map((tech) => (
-                    <span
-                      key={tech}
-                      className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-                
-                <div className="flex gap-3">
-                  {project.liveUrl && (
-                    <a
-                      href={project.liveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Live Demo
-                    </a>
-                  )}
-                  {project.githubUrl && (
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-gray-800 text-white text-center py-2 px-4 rounded-lg hover:bg-gray-900 transition-colors"
-                    >
-                      GitHub
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Link>
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       )}

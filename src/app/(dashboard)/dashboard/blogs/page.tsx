@@ -5,6 +5,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { blogAPI } from '@/lib/api';
 import { Blog } from '@/types';
+import toast from 'react-hot-toast';
+
+
+
 
 export default function DashboardBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -21,22 +25,74 @@ export default function DashboardBlogsPage() {
       setBlogs(blogsData);
     } catch (error) {
       console.error('Error fetching blogs:', error);
+      toast.error('Failed to fetch blogs');
     } finally {
       setLoading(false);
     }
   };
 
   const deleteBlog = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this blog?')) {
-      return;
-    }
+    const blogToDelete = blogs.find(blog => blog.id === id);
+    
+    toast((t) => (
+      <div className="flex flex-col space-y-4 bg-white p-4">
+        <div className="text-lg font-semibold text-gray-900">
+          Delete Blog Post?
+        </div>
+        <div className="text-gray-600">
+          Are you sure you want to delete &quot;{blogToDelete?.title}&quot;? This action cannot be undone.
+        </div>
+        <div className="flex justify-end space-x-3 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await handleDeleteConfirm(id);
+            }}
+            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 10000,
+      position: 'top-center',
+    });
+  };
 
+  const handleDeleteConfirm = async (id: string) => {
     try {
       await blogAPI.delete(id);
       setBlogs(blogs.filter(blog => blog.id !== id));
+      toast.success('Blog deleted successfully');
     } catch (error) {
       console.error('Error deleting blog:', error);
-      alert('Failed to delete blog');
+      toast.error('Failed to delete blog');
+    }
+  };
+
+  const togglePublishStatus = async (id: string, currentlyPublished: boolean) => {
+    try {
+      await blogAPI.update(id, { published: !currentlyPublished });
+      setBlogs(blogs.map(blog => 
+        blog.id === id 
+          ? { ...blog, published: !currentlyPublished }
+          : blog
+      ));
+      toast.success(
+        currentlyPublished 
+          ? 'Blog unpublished successfully' 
+          : 'Blog published successfully'
+      );
+    } catch (error) {
+      console.error('Error updating blog:', error);
+      toast.error('Failed to update blog');
     }
   };
 
@@ -50,6 +106,7 @@ export default function DashboardBlogsPage() {
 
   return (
     <div className="space-y-6">
+    
       {/* Header Section - Mobile Optimized */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -116,15 +173,16 @@ export default function DashboardBlogsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      <button
+                        onClick={() => togglePublishStatus(blog.id, blog.published)}
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer transition-colors ${
                           blog.published
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                         }`}
                       >
                         {blog.published ? 'Published' : 'Draft'}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(blog.createdAt).toLocaleDateString()}
@@ -167,15 +225,16 @@ export default function DashboardBlogsPage() {
                   <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1 mr-2">
                     {blog.title}
                   </h3>
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
+                  <button
+                    onClick={() => togglePublishStatus(blog.id, blog.published)}
+                    className={`px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors flex-shrink-0 ${
                       blog.published
                         ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
                     }`}
                   >
                     {blog.published ? 'Published' : 'Draft'}
-                  </span>
+                  </button>
                 </div>
                 
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">

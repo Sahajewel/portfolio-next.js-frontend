@@ -2,8 +2,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { blogAPI } from '@/lib/api';
 import { Blog } from '@/types';
+import { Metadata } from 'next';
+
 
 export const revalidate = 3600;
+
+export const metadata:Metadata = {
+  title: 'My Portfolio - Blog',
+  description: 'Thoughts, tutorials, and insights about web development and technology',
+};
 
 async function getBlogs(): Promise<Blog[]> {
   try {
@@ -19,7 +26,9 @@ export default async function BlogsPage() {
   const blogs = await getBlogs();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+   <div>
+   
+     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
@@ -85,5 +94,6 @@ export default async function BlogsPage() {
         </div>
       )}
     </div>
+   </div>
   );
 }

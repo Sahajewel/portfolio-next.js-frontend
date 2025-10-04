@@ -1,6 +1,11 @@
+import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
+export const metadata:Metadata = {
+  title: 'My Portfolio - About me',
+  description: 'Hi! I’m Saha Jewel Kumar, a passionate Frontend Developer from Saitama, Japan, originally from Cumilla, Bangladesh.I specialize in building modern, responsive, and user-friendly web applications using React, Next.js, Tailwind CSS, and JavaScript.'
+};
 const personalInfo = {
   name: "Saha Jewel Kumar",
   title: "Full Stack Developer",
