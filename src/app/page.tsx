@@ -1662,14 +1662,14 @@ const PortfolioHome = () => {
               {
                 icon: Mail,
                 title: "Email",
-                value: "your@email.com",
+                value: "jewelsaha072@email.com",
                 href: "mailto:your@email.com",
                 color: "from-purple-500 to-purple-600",
               },
               {
                 icon: Phone,
                 title: "Phone",
-                value: "+1 (234) 567-890",
+                value: "+81 80 5052 6822",
                 href: "tel:+1234567890",
                 color: "from-pink-500 to-pink-600",
               },
@@ -1677,7 +1677,7 @@ const PortfolioHome = () => {
                 icon: Linkedin,
                 title: "LinkedIn",
                 value: "Connect with me",
-                href: "https://linkedin.com",
+                href: "https://www.linkedin.com/in/sahajewelkumar",
                 color: "from-blue-500 to-blue-600",
               },
             ].map((contact: ContactInfo, index: number) => (
@@ -1817,9 +1817,12 @@ const PortfolioHome = () => {
               <h4 className="font-semibold mb-4">Connect</h4>
               <div className="flex gap-4">
                 {[
-                  { icon: Github, href: "https://github.com" },
-                  { icon: Linkedin, href: "https://linkedin.com" },
-                  { icon: Mail, href: "mailto:your@email.com" },
+                  { icon: Github, href: "https://github.com/Sahajewel" },
+                  {
+                    icon: Linkedin,
+                    href: "https://www.linkedin.com/in/sahajewelkumar",
+                  },
+                  { icon: Mail, href: "mailto:jewelsaha072@email.com" },
                 ].map((social, index) => (
                   <a
                     key={index}
@@ -1852,7 +1855,7 @@ const PortfolioHome = () => {
                 : "border-purple-200 text-gray-600"
             }`}
           >
-            <p>© 2024 Your Name. All rights reserved. Made with 💜 and ☕</p>
+            <p>© 2025 saha jewel kumar. All rights reserved.</p>
           </div>
         </div>
       </footer>
