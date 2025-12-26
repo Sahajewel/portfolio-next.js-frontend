@@ -1,23 +1,28 @@
 // components/TagsInput.tsx
-'use client';
+"use client";
 
-import { useState, useRef, KeyboardEvent } from 'react';
+import { useState, useRef, KeyboardEvent } from "react";
 
 interface TagsInputProps {
   tags: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
+  theme?: string;
 }
 
-export default function TagsInput({ tags, onChange, placeholder = "Add tags..." }: TagsInputProps) {
-  const [inputValue, setInputValue] = useState('');
+export default function TagsInput({
+  tags,
+  onChange,
+  placeholder = "Add tags...",
+}: TagsInputProps) {
+  const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === "," || e.key === " ") {
       e.preventDefault();
       addTag();
-    } else if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
+    } else if (e.key === "Backspace" && inputValue === "" && tags.length > 0) {
       removeTag(tags.length - 1);
     }
   };
@@ -26,7 +31,7 @@ export default function TagsInput({ tags, onChange, placeholder = "Add tags..." 
     const tag = inputValue.trim();
     if (tag && !tags.includes(tag)) {
       onChange([...tags, tag]);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
@@ -45,7 +50,7 @@ export default function TagsInput({ tags, onChange, placeholder = "Add tags..." 
   };
 
   return (
-    <div 
+    <div
       className="border border-gray-300 rounded-lg p-3 min-h-12 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all duration-200 cursor-text"
       onClick={() => inputRef.current?.focus()}
     >
@@ -75,7 +80,7 @@ export default function TagsInput({ tags, onChange, placeholder = "Add tags..." 
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          placeholder={tags.length === 0 ? placeholder : ''}
+          placeholder={tags.length === 0 ? placeholder : ""}
           className="flex-1 outline-none min-w-20 bg-transparent py-1 text-sm"
         />
       </div>
