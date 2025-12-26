@@ -12,8 +12,6 @@ import {
   Award,
   ExternalLink,
   ChevronDown,
-  Menu,
-  X,
   Calendar,
   MapPin,
   GraduationCap,
@@ -23,11 +21,15 @@ import {
   Star,
   MessageSquare,
   ArrowRight,
+  LogIn,
+  LayoutDashboard,
+  LogOut,
   Sparkles,
   Sun,
   Moon,
+  Menu,
+  X,
   Book,
-  Tag,
   User,
   Clock,
 } from "lucide-react";
@@ -35,13 +37,17 @@ import { useTheme } from "next-themes";
 import { blogAPI, projectAPI } from "@/lib/api";
 import { Blog, Project } from "@/types";
 import Image from "next/image";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 // Type definitions for component state
 interface MousePosition {
   x: number;
   y: number;
 }
+
 type SkillLevel = "Beginner" | "Intermediate" | "Advanced" | "Expert";
+
 interface Skill {
   name: string;
   level: SkillLevel;
@@ -106,16 +112,27 @@ interface Category {
 
 const PortfolioHome = () => {
   const { theme, setTheme } = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [activeSection, setActiveSection] = useState<string>("home");
-  const [isScrolled, setIsScrolled] = useState<boolean>(false);
-  const [mousePosition, setMousePosition] = useState<MousePosition>({
-    x: 0,
-    y: 0,
-  });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+
+  const menuItems = [
+    "home",
+    "about",
+    "experience",
+    "education",
+    "skills",
+    "projects",
+    "blogs",
+    "achievements",
+    "philosophy",
+    "contact",
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -130,7 +147,7 @@ const PortfolioHome = () => {
         "projects",
         "blogs",
         "achievements",
-        "testimonials",
+        "philosophy",
         "contact",
       ];
       const current = sections.find((section) => {
@@ -166,11 +183,9 @@ const PortfolioHome = () => {
         blogAPI.getAll(),
       ]);
 
-      // Handle API response based on your structure
       const projects = projectsResponse.data?.data || [];
       const blogs = blogsResponse.data?.data || [];
 
-      // Cast to proper types
       const typedProjects = projects as Project[];
       const typedBlogs = blogs as Blog[];
 
@@ -178,7 +193,6 @@ const PortfolioHome = () => {
       setFeaturedBlogs(typedBlogs.slice(0, 3));
     } catch (error) {
       console.error("Error fetching data:", error);
-      // Set fallback data
       setFeaturedProjects([
         {
           id: "1",
@@ -199,21 +213,20 @@ const PortfolioHome = () => {
         {
           id: "1",
           title: "Building Scalable Applications",
-          slug: "building-scalable-applications", // Missing property fixed
+          slug: "building-scalable-applications",
           content:
             "Learn how to build scalable applications with modern patterns.",
           excerpt:
             "Learn how to build scalable applications with modern patterns.",
           thumbnail:
             "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop",
-          published: true, // Missing property fixed
-          views: 0, // Missing property fixed
+          published: true,
+          views: 0,
           tags: ["React", "JavaScript"],
           author: "John Doe",
-          authorId: "admin-1", // Missing property fixed
+          authorId: "admin-1",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          // readTime বাদ দেওয়া হয়েছে ইন্টারফেস অনুযায়ী
         },
       ]);
     } finally {
@@ -283,8 +296,8 @@ const PortfolioHome = () => {
   const education: Education[] = [
     {
       degree: "B.Sc. in Civil Engineering",
-      institution: "Stamfoed University Bangladesh",
-      duration: "2009 - 2013", // ১৩-তে পাস
+      institution: "Stamford University Bangladesh",
+      duration: "2009 - 2013",
       gpa: "Completed",
       achievements: [
         "Extensive experience in structural logic and project management",
@@ -335,6 +348,33 @@ const PortfolioHome = () => {
       icon: "⚡",
       description:
         "Mastered Next.js 15+ features, including Server Components, Server Actions, and advanced performance optimization.",
+    },
+  ];
+
+  const testimonials: Testimonial[] = [
+    {
+      name: "Mizanur Rahman",
+      role: "Senior Developer at TechCorp",
+      image:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+      text: "Exceptional problem-solving skills and dedication to writing clean, maintainable code. A true professional.",
+      rating: 5,
+    },
+    {
+      name: "Jhankar Mahbub",
+      role: "CEO at Programming Hero",
+      image:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
+      text: "One of our most dedicated students who has shown remarkable progress and commitment to learning.",
+      rating: 5,
+    },
+    {
+      name: "Sarah Johnson",
+      role: "Project Manager at DevSolutions",
+      image:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+      text: "Reliable developer who always delivers high-quality work on time. Great team player!",
+      rating: 5,
     },
   ];
 
@@ -440,44 +480,80 @@ const PortfolioHome = () => {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex space-x-1 items-center">
-              {[
-                "home",
-                "about",
-                "experience",
-                "education",
-                "skills",
-                "projects",
-                "blogs",
-                "achievements",
-                "testimonials",
-                "contact",
-              ].map((item) => (
+              {menuItems.map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(item)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
                     activeSection === item
                       ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/50"
                       : theme === "dark"
-                      ? "text-gray-300 hover:text-white hover:bg-white/5"
-                      : "text-gray-600 hover:text-purple-600 hover:bg-purple-50"
+                      ? "text-gray-200 hover:text-white hover:bg-white/10"
+                      : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
                   }`}
                 >
                   {item.charAt(0).toUpperCase() + item.slice(1)}
                 </button>
               ))}
+
+              {/* Divider */}
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+
+              {/* Login / Dashboard Button */}
+              {session ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/dashboard"
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2"
+                  >
+                    <LayoutDashboard size={16} />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => signOut()}
+                    className="px-4 py-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg font-semibold transition-all flex items-center gap-2"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2"
+                >
+                  <LogIn size={16} />
+                  Login
+                </Link>
+              )}
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="ml-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+              >
+                {theme === "dark" ? (
+                  <Sun size={20} className="text-yellow-400" />
+                ) : (
+                  <Moon size={20} className="text-gray-700" />
+                )}
+              </button>
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:hidden">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
               >
-                {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+                {theme === "dark" ? (
+                  <Sun size={20} className="text-yellow-400" />
+                ) : (
+                  <Moon size={20} className="text-gray-700" />
+                )}
               </button>
               <button
-                className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-all"
+                className="p-2 hover:bg-white/10 rounded-lg transition-all"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
                 {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -489,33 +565,58 @@ const PortfolioHome = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden bg-white dark:bg-slate-900/98 backdrop-blur-md border-t border-purple-500/20">
-            <div className="px-4 pt-2 pb-3 space-y-1 max-h-96 overflow-y-auto">
-              {[
-                "home",
-                "about",
-                "experience",
-                "education",
-                "skills",
-                "projects",
-                "blogs",
-                "achievements",
-                "testimonials",
-                "contact",
-              ].map((item) => (
+            <div className="px-4 pt-2 pb-3 space-y-1">
+              {menuItems.map((item) => (
                 <button
                   key={item}
-                  onClick={() => scrollToSection(item)}
-                  className={`block w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-all ${
+                  onClick={() => {
+                    scrollToSection(item);
+                    setIsMenuOpen(false);
+                  }}
+                  className={`block w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors ${
                     activeSection === item
                       ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
-                      : theme === "dark"
-                      ? "text-gray-300 hover:text-white hover:bg-white/5"
-                      : "text-gray-600 hover:text-purple-600 hover:bg-purple-50"
+                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                 >
                   {item.charAt(0).toUpperCase() + item.slice(1)}
                 </button>
               ))}
+
+              {/* Mobile Login/Logout */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                {session ? (
+                  <div className="space-y-2">
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <LayoutDashboard className="inline mr-2" size={16} />
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="block w-full px-4 py-3 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg font-semibold text-center"
+                    >
+                      <LogOut className="inline mr-2" size={16} />
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LogIn className="inline mr-2" size={16} />
+                    Admin Login
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -524,7 +625,7 @@ const PortfolioHome = () => {
       {/* Hero Section */}
       <section
         id="home"
-        className="min-h-screen flex items-center justify-center px-4 pt-16 relative"
+        className="min-h-screen flex items-center justify-center px-4 pt-16 pb-8 relative"
       >
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
           <div
@@ -566,7 +667,7 @@ const PortfolioHome = () => {
 
             <p
               className={`text-xl leading-relaxed ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
+                theme === "dark" ? "text-gray-300" : "text-gray-600"
               }`}
             >
               I specialize in bridging the gap between robust backend systems
@@ -576,11 +677,7 @@ const PortfolioHome = () => {
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
-              <a
-                href="/resume.pdf" // public ফোল্ডারে থাকা ফাইলের নাম
-                download="Jewel_Saha_Resume.pdf" // ডাউনলোড হওয়ার সময় ফাইলটা এই নামে সেভ হবে
-                className="inline-block"
-              >
+              <a href="/resume.pdf">
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
                   Download Resume
@@ -629,7 +726,7 @@ const PortfolioHome = () => {
                       ? "hover:bg-pink-600"
                       : "hover:bg-pink-100",
                 },
-              ].map((social: SocialLink, index: number) => (
+              ].map((social, index) => (
                 <a
                   key={index}
                   href={social.href}
@@ -654,7 +751,6 @@ const PortfolioHome = () => {
             </div>
 
             <div className="flex flex-wrap gap-6 pt-6 text-sm">
-              {/* Experience Section */}
               <div className="flex items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -666,16 +762,14 @@ const PortfolioHome = () => {
                 <div>
                   <p
                     className={
-                      theme === "dark" ? "text-gray-500" : "text-gray-600"
+                      theme === "dark" ? "text-gray-300" : "text-gray-600"
                     }
                   >
                     Stack Focus
                   </p>
-                  <p className="font-semibold">2+ Years</p>
+                  <p className="font-semibold">MERN + Next.js</p>
                 </div>
               </div>
-
-              {/* Projects Section */}
               <div className="flex items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -687,16 +781,14 @@ const PortfolioHome = () => {
                 <div>
                   <p
                     className={
-                      theme === "dark" ? "text-gray-500" : "text-gray-600"
+                      theme === "dark" ? "text-gray-300" : "text-gray-600"
                     }
                   >
-                    Practical Works
+                    Experience
                   </p>
-                  <p className="font-semibold">10+ Projects</p>
+                  <p className="font-semibold">2+ Years</p>
                 </div>
               </div>
-
-              {/* Certifications Section */}
               <div className="flex items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -708,12 +800,12 @@ const PortfolioHome = () => {
                 <div>
                   <p
                     className={
-                      theme === "dark" ? "text-gray-500" : "text-gray-600"
+                      theme === "dark" ? "text-gray-300" : "text-gray-600"
                     }
                   >
-                    Certification
+                    Projects
                   </p>
-                  <p className="font-semibold">Professional</p>
+                  <p className="font-semibold">10+ Completed</p>
                 </div>
               </div>
             </div>
@@ -751,21 +843,22 @@ const PortfolioHome = () => {
               </div>
 
               {/* Main Image */}
-              <div
-                className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden border-4 relative ${
-                  theme === "dark"
-                    ? "bg-slate-900 border-slate-900"
-                    : "bg-white border-white"
-                }`}
-              >
-                <Image
-                  src="/saha.png"
-                  alt="Profile"
-                  fill // এটা দিলে ডিভ-এর পুরো সাইজটা ইমেজ নিয়ে নিবে
-                  className="object-cover" // ইমেজটা গোল ডিভ-এর ভেতরে সুন্দর সেট হবে
-                  priority // হিরো সেকশন তাই সবার আগে লোড হবে
-                  sizes="(max-width: 768px) 100vw, 500px" // রেসপন্সিভনেস এর জন্য ভালো
-                />
+              <div className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 p-1 animate-pulse-slow">
+                <div
+                  className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden border-4 ${
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-900"
+                      : "bg-white border-white"
+                  }`}
+                >
+                  <Image
+                    src="/saha.png"
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    width={200}
+                    height={200}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -779,21 +872,21 @@ const PortfolioHome = () => {
       {/* About Section */}
       <section
         id="about"
-        className="min-h-screen flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 About Me
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               Get to know me better
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
             <div
               className={`space-y-6 text-lg leading-relaxed ${
                 theme === "dark" ? "text-gray-300" : "text-gray-700"
@@ -858,7 +951,7 @@ const PortfolioHome = () => {
                   icon: Star,
                   title: "Team Enthusiast",
                   desc: "Collaborative and communicative",
-                  color: "Always up-to-date with the latest industry trends",
+                  color: "from-green-500 to-green-600",
                 },
               ].map((item, index) => (
                 <div
@@ -892,16 +985,16 @@ const PortfolioHome = () => {
       {/* Experience Section */}
       <section
         id="experience"
-        className="min-h-screen flex items-center justify-center px-4  relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Technical Journey
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               My learning and implementation path
             </p>
           </div>
@@ -941,7 +1034,7 @@ const PortfolioHome = () => {
                           <div
                             className={`flex items-center gap-2 mb-2 ${
                               theme === "dark"
-                                ? "text-gray-400"
+                                ? "text-gray-300"
                                 : "text-gray-600"
                             }`}
                           >
@@ -951,7 +1044,7 @@ const PortfolioHome = () => {
                           <div
                             className={`flex items-center gap-2 ${
                               theme === "dark"
-                                ? "text-gray-400"
+                                ? "text-gray-300"
                                 : "text-gray-600"
                             }`}
                           >
@@ -979,7 +1072,7 @@ const PortfolioHome = () => {
                               key={i}
                               className={`flex items-start gap-2 ${
                                 theme === "dark"
-                                  ? "text-gray-400"
+                                  ? "text-gray-300"
                                   : "text-gray-600"
                               }`}
                             >
@@ -1016,16 +1109,16 @@ const PortfolioHome = () => {
       {/* Education Section */}
       <section
         id="education"
-        className="min-h-screen flex items-center justify-center px-4  relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-5xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Education
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               My academic background
             </p>
           </div>
@@ -1054,7 +1147,7 @@ const PortfolioHome = () => {
 
                 <div
                   className={`flex items-center gap-4 text-sm mb-4 ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -1075,7 +1168,7 @@ const PortfolioHome = () => {
                       <li
                         key={i}
                         className={`flex items-start gap-2 text-sm ${
-                          theme === "dark" ? "text-gray-400" : "text-gray-600"
+                          theme === "dark" ? "text-gray-300" : "text-gray-600"
                         }`}
                       >
                         <Trophy
@@ -1094,20 +1187,18 @@ const PortfolioHome = () => {
       </section>
 
       {/* Skills Section */}
-
       <section
         id="skills"
-        className="min-h-screen flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Skills & Expertise
               </span>
             </h2>
-
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               Technologies I work with
             </p>
           </div>
@@ -1125,15 +1216,12 @@ const PortfolioHome = () => {
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{skill.icon}</span>
-
                     <span className="font-semibold">{skill.name}</span>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <span className="text-purple-400 font-bold text-lg">
                       {skill.level}
                     </span>
-
                     <span
                       className={`px-2 py-1 rounded text-xs ${
                         theme === "dark"
@@ -1145,7 +1233,6 @@ const PortfolioHome = () => {
                     </span>
                   </div>
                 </div>
-
                 <div
                   className={`relative h-3 rounded-full overflow-hidden ${
                     theme === "dark" ? "bg-slate-900" : "bg-gray-200"
@@ -1153,7 +1240,16 @@ const PortfolioHome = () => {
                 >
                   <div
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-full transition-all duration-1000 ease-out group-hover:shadow-lg group-hover:shadow-purple-500/50"
-                    style={{ width: `${skill.level}` }}
+                    style={{
+                      width:
+                        skill.level === "Expert"
+                          ? "95%"
+                          : skill.level === "Advanced"
+                          ? "85%"
+                          : skill.level === "Intermediate"
+                          ? "70%"
+                          : "50%",
+                    }}
                   >
                     <div className="absolute inset-0 bg-white/20 animate-shimmer"></div>
                   </div>
@@ -1166,68 +1262,51 @@ const PortfolioHome = () => {
             {[
               {
                 title: "Frontend",
-
                 color:
                   theme === "dark"
                     ? "from-purple-900/50 to-slate-900/50"
                     : "from-purple-50 to-white",
-
                 border:
                   theme === "dark"
                     ? "border-purple-500/20"
                     : "border-purple-200",
-
                 techs: ["React", "Next.js", "TypeScript", "Tailwind", "Redux"],
               },
-
               {
                 title: "Backend",
-
                 color:
                   theme === "dark"
                     ? "from-pink-900/50 to-slate-900/50"
                     : "from-pink-50 to-white",
-
                 border:
                   theme === "dark" ? "border-pink-500/20" : "border-pink-200",
-
                 techs: [
                   "Node.js",
-
                   "Express",
-
                   "Prisma",
-
                   "PostgreSQL",
-
                   "MongoDB",
                 ],
               },
-
               {
                 title: "DevOps & Tools",
-
                 color:
                   theme === "dark"
                     ? "from-blue-900/50 to-slate-900/50"
                     : "from-blue-50 to-white",
-
                 border:
                   theme === "dark" ? "border-blue-500/20" : "border-blue-200",
-
                 techs: ["Git", "Docker", "AWS", "Vercel", "CI/CD"],
               },
-            ].map((category: Category, index: number) => (
+            ].map((category, index) => (
               <div
                 key={index}
                 className={`bg-gradient-to-br ${category.color} p-6 rounded-2xl backdrop-blur-sm border ${category.border} hover:scale-105 transition-all`}
               >
                 <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
                   <span className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-600 rounded-full"></span>
-
                   {category.title}
                 </h3>
-
                 <div className="flex flex-wrap gap-2">
                   {category.techs.map((tech) => (
                     <span
@@ -1251,16 +1330,16 @@ const PortfolioHome = () => {
       {/* Projects Section - Dynamic */}
       <section
         id="projects"
-        className="min-h-screen flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Featured Projects
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               Some of my recent work
             </p>
           </div>
@@ -1269,14 +1348,14 @@ const PortfolioHome = () => {
             <div className="text-center py-12">
               <p
                 className={`text-xl ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  theme === "dark" ? "text-gray-300" : "text-gray-600"
                 }`}
               >
                 No projects available at the moment.
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredProjects.map((project: Project) => (
                 <div
                   key={project.id}
@@ -1318,7 +1397,7 @@ const PortfolioHome = () => {
                   <div className="p-6 space-y-4">
                     <p
                       className={`text-sm leading-relaxed ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
                       {project.description}
@@ -1390,16 +1469,16 @@ const PortfolioHome = () => {
       {/* Blogs Section - Dynamic */}
       <section
         id="blogs"
-        className="min-h-screen flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Latest Blogs
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               Thoughts and tutorials I've shared
             </p>
           </div>
@@ -1408,14 +1487,14 @@ const PortfolioHome = () => {
             <div className="text-center py-12">
               <p
                 className={`text-xl ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  theme === "dark" ? "text-gray-300" : "text-gray-600"
                 }`}
               >
                 No blogs available at the moment.
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredBlogs.map((blog: Blog) => (
                 <div
                   key={blog.id}
@@ -1447,7 +1526,7 @@ const PortfolioHome = () => {
                     <div className="flex items-center justify-between text-sm">
                       <div
                         className={`flex items-center gap-2 ${
-                          theme === "dark" ? "text-gray-400" : "text-gray-600"
+                          theme === "dark" ? "text-gray-300" : "text-gray-600"
                         }`}
                       >
                         <User size={14} />
@@ -1459,11 +1538,11 @@ const PortfolioHome = () => {
                       </div>
                       <div
                         className={`flex items-center gap-2 ${
-                          theme === "dark" ? "text-gray-400" : "text-gray-600"
+                          theme === "dark" ? "text-gray-300" : "text-gray-600"
                         }`}
                       >
                         <Clock size={14} />
-                        {/* <span>{blog.readTime || "5 min"}</span> */}
+                        <span>5 min</span>
                       </div>
                     </div>
 
@@ -1473,7 +1552,7 @@ const PortfolioHome = () => {
 
                     <p
                       className={`text-sm leading-relaxed line-clamp-3 ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
                       {blog.excerpt ||
@@ -1532,16 +1611,16 @@ const PortfolioHome = () => {
       {/* Achievements Section */}
       <section
         id="achievements"
-        className="min-h-screen flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Achievements & Certifications
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               Recognition and milestones
             </p>
           </div>
@@ -1566,7 +1645,7 @@ const PortfolioHome = () => {
                     </h3>
                     <div
                       className={`flex items-center gap-3 text-sm mb-3 ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
                       <span className="text-purple-400 font-semibold">
@@ -1577,7 +1656,7 @@ const PortfolioHome = () => {
                     </div>
                     <p
                       className={`text-sm ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
                       {achievement.description}
@@ -1593,37 +1672,35 @@ const PortfolioHome = () => {
       {/* Philosophy Section */}
       <section
         id="philosophy"
-        className="min-h-[70vh] flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 My Philosophy
               </span>
             </h2>
-            <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
+            <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
               The principles that drive my development process
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {codingPhilosophy.map((item, index) => (
               <div
                 key={index}
-                className={`group p-8 rounded-2xl border transition-all hover:-translate-y-2 ${
+                className={`group p-8 rounded-2xl border transition-all hover:scale-105 hover:shadow-xl ${
                   theme === "dark"
                     ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/10"
                     : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/10"
                 }`}
               >
-                <div className="text-4xl mb-6 group-hover:scale-125 transition-transform duration-300">
-                  {item.icon}
-                </div>
-                <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
+                <div className="text-5xl mb-4">{item.icon}</div>
+                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
                 <p
-                  className={`leading-relaxed ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  className={`text-sm ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
                   {item.text}
@@ -1637,10 +1714,10 @@ const PortfolioHome = () => {
       {/* Contact Section */}
       <section
         id="contact"
-        className="min-h-screen flex items-center justify-center px-4 py-20 relative z-10"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
       >
         <div className="max-w-4xl mx-auto w-full text-center">
-          <div className="mb-16">
+          <div className="mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                 Let's Work Together
@@ -1648,7 +1725,7 @@ const PortfolioHome = () => {
             </h2>
             <p
               className={`text-xl leading-relaxed max-w-2xl mx-auto ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
+                theme === "dark" ? "text-gray-300" : "text-gray-600"
               }`}
             >
               Have a project in mind or just want to chat? I'm always open to
@@ -1663,14 +1740,14 @@ const PortfolioHome = () => {
                 icon: Mail,
                 title: "Email",
                 value: "jewelsaha072@email.com",
-                href: "mailto:your@email.com",
+                href: "mailto:jewelsaha072@email.com",
                 color: "from-purple-500 to-purple-600",
               },
               {
                 icon: Phone,
                 title: "Phone",
                 value: "+81 80 5052 6822",
-                href: "tel:+1234567890",
+                href: "tel:+818050526822",
                 color: "from-pink-500 to-pink-600",
               },
               {
@@ -1680,7 +1757,7 @@ const PortfolioHome = () => {
                 href: "https://www.linkedin.com/in/sahajewelkumar",
                 color: "from-blue-500 to-blue-600",
               },
-            ].map((contact: ContactInfo, index: number) => (
+            ].map((contact, index) => (
               <a
                 key={index}
                 href={contact.href}
@@ -1704,7 +1781,7 @@ const PortfolioHome = () => {
                 <h3 className="font-bold text-lg mb-2">{contact.title}</h3>
                 <p
                   className={
-                    theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }
                 >
                   {contact.value}
@@ -1714,7 +1791,7 @@ const PortfolioHome = () => {
           </div>
 
           <div
-            className={`p-10 rounded-2xl border ${
+            className={`p-8 rounded-2xl border ${
               theme === "dark"
                 ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20"
                 : "bg-white/50 backdrop-blur-sm border-purple-200"
@@ -1788,7 +1865,7 @@ const PortfolioHome = () => {
               </h3>
               <p
                 className={`leading-relaxed ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  theme === "dark" ? "text-gray-300" : "text-gray-600"
                 }`}
               >
                 Building exceptional digital experiences with passion and
@@ -1804,8 +1881,8 @@ const PortfolioHome = () => {
                     onClick={() => scrollToSection(link.toLowerCase())}
                     className={`block transition-colors ${
                       theme === "dark"
-                        ? "text-gray-400 hover:text-purple-400"
-                        : "text-gray-600 hover:text-purple-600"
+                        ? "text-gray-300 hover:text-purple-400"
+                        : "text-gray-700 hover:text-purple-600"
                     }`}
                   >
                     {link}
@@ -1839,7 +1916,7 @@ const PortfolioHome = () => {
                       size={20}
                       className={
                         theme === "dark"
-                          ? "text-gray-400 hover:text-white"
+                          ? "text-gray-300 hover:text-white"
                           : "text-gray-600 hover:text-purple-600"
                       }
                     />
@@ -1851,7 +1928,7 @@ const PortfolioHome = () => {
           <div
             className={`border-t pt-8 text-center ${
               theme === "dark"
-                ? "border-purple-500/20 text-gray-400"
+                ? "border-purple-500/20 text-gray-300"
                 : "border-purple-200 text-gray-600"
             }`}
           >
