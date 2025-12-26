@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import { blogAPI } from '@/lib/api';
-import { Blog } from '@/types';
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import { blogAPI } from "@/lib/api";
+import { Blog } from "@/types";
 
 interface PageProps {
   params: {
@@ -13,7 +13,7 @@ export async function generateStaticParams() {
   try {
     const response = await blogAPI.getAll();
     const blogs: Blog[] = response.data.data || response.data || [];
-    
+
     return blogs.map((blog) => ({
       id: blog.id,
     }));
@@ -29,7 +29,7 @@ async function getBlog(id: string): Promise<Blog | null> {
     const response = await blogAPI.getById(id);
     return response.data.data || response.data;
   } catch (error) {
-    console.error('Error fetching blog:', error);
+    console.error("Error fetching blog:", error);
     return null;
   }
 }
@@ -55,15 +55,20 @@ export default async function BlogPage({ params }: PageProps) {
             />
           </div>
         )}
-        
+
         <div className="p-8">
           <header className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               {blog.title}
             </h1>
-            
+
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-              <span>By {blog.author?.name || 'Admin'}</span>
+              <span>
+                By{" "}
+                {typeof blog.author === "string"
+                  ? blog.author
+                  : blog.author?.name || "Admin"}
+              </span>
               <span>•</span>
               <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
               <span>•</span>
@@ -86,7 +91,7 @@ export default async function BlogPage({ params }: PageProps) {
             )}
           </header>
 
-          <div 
+          <div
             className="prose prose-lg max-w-none"
             dangerouslySetInnerHTML={{ __html: blog.content }}
           />

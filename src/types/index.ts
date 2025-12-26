@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   username: string;
-  role: 'USER' | 'ADMIN';
+  role: "USER" | "ADMIN";
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +22,8 @@ export interface Blog {
   metaDesc?: string;
   createdAt: string;
   updatedAt: string;
-  author: User;
+  author: string | User;
+  readTime?: string;
   authorId: string;
 }
 
@@ -46,7 +47,7 @@ export interface Resume {
   createdAt: string;
   updatedAt: string;
   user?: User;
-   template?: string;
+  template?: string;
 }
 
 export interface ResumeData {
@@ -125,85 +126,85 @@ export interface TemplateConfig {
     background: string;
     text: string;
   };
-  layout: 'modern' | 'professional' | 'creative' | 'minimal';
+  layout: "modern" | "professional" | "creative" | "minimal";
   sections: {
     showPhoto: boolean;
-    skillStyle: 'bars' | 'tags' | 'dots';
-    experienceLayout: 'timeline' | 'cards';
+    skillStyle: "bars" | "tags" | "dots";
+    experienceLayout: "timeline" | "cards";
   };
 }
 
 export const TEMPLATES: TemplateConfig[] = [
   {
-    id: 'modern',
-    name: 'Modern',
-    description: 'Clean design with gradients and modern elements',
+    id: "modern",
+    name: "Modern",
+    description: "Clean design with gradients and modern elements",
     colors: {
-      primary: '#2563eb',
-      secondary: '#1e40af',
-      accent: '#3b82f6',
-      background: '#ffffff',
-      text: '#1f2937'
+      primary: "#2563eb",
+      secondary: "#1e40af",
+      accent: "#3b82f6",
+      background: "#ffffff",
+      text: "#1f2937",
     },
-    layout: 'modern',
+    layout: "modern",
     sections: {
       showPhoto: false,
-      skillStyle: 'bars',
-      experienceLayout: 'timeline'
-    }
+      skillStyle: "bars",
+      experienceLayout: "timeline",
+    },
   },
   {
-    id: 'professional',
-    name: 'Professional',
-    description: 'Corporate style suitable for traditional industries',
+    id: "professional",
+    name: "Professional",
+    description: "Corporate style suitable for traditional industries",
     colors: {
-      primary: '#374151',
-      secondary: '#111827',
-      accent: '#6b7280',
-      background: '#ffffff',
-      text: '#1f2937'
+      primary: "#374151",
+      secondary: "#111827",
+      accent: "#6b7280",
+      background: "#ffffff",
+      text: "#1f2937",
     },
-    layout: 'professional',
+    layout: "professional",
     sections: {
       showPhoto: true,
-      skillStyle: 'tags',
-      experienceLayout: 'cards'
-    }
+      skillStyle: "tags",
+      experienceLayout: "cards",
+    },
   },
   {
-    id: 'creative',
-    name: 'Creative',
-    description: 'Colorful and creative design for design roles',
+    id: "creative",
+    name: "Creative",
+    description: "Colorful and creative design for design roles",
     colors: {
-      primary: '#7c3aed',
-      secondary: '#5b21b6',
-      accent: '#8b5cf6',
-      background: '#ffffff',
-      text: '#1f2937'
+      primary: "#7c3aed",
+      secondary: "#5b21b6",
+      accent: "#8b5cf6",
+      background: "#ffffff",
+      text: "#1f2937",
     },
-    layout: 'creative',
+    layout: "creative",
     sections: {
       showPhoto: true,
-      skillStyle: 'dots',
-      experienceLayout: 'timeline'
-    }
+      skillStyle: "dots",
+      experienceLayout: "timeline",
+    },
   },
   {
-    id: 'minimal',
-    name: 'Minimal',
-    description: 'Simple and clean with maximum readability',
+    id: "minimal",
+    name: "Minimal",
+    description: "Simple and clean with maximum readability",
     colors: {
-      primary: '#000000',
-      secondary: '#374151',
-      accent: '#6b7280',
-      background: '#ffffff',
-      text: '#1f2937'
+      primary: "#000000",
+      secondary: "#374151",
+      accent: "#6b7280",
+      background: "#ffffff",
+      text: "#1f2937",
     },
-    layout: 'minimal',
+    layout: "minimal",
     sections: {
       showPhoto: false,
-      skillStyle: 'tags',
-      experienceLayout: 'cards'
-    }
-  }
+      skillStyle: "tags",
+      experienceLayout: "cards",
+    },
+  },
 ];
