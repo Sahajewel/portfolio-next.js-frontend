@@ -57,10 +57,10 @@ export default function DashboardBlogsPage() {
               <Trash2 className="text-red-500" size={20} />
             </div>
             <div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="text-lg font-semibold text-[#f80000] dark:text-white">
                 Delete Blog Post?
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="text-sm text-[#f80000] dark:text-gray-300">
                 Are you sure you want to delete &quot;{blogToDelete?.title}
                 &quot;?
               </div>

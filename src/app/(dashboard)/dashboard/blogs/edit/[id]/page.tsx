@@ -1,13 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// app/dashboard/blogs/edit/[id]/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { blogAPI } from "@/lib/api";
 import toast from "react-hot-toast";
 import TagsInput from "@/components/TagaInput";
 import { useTheme } from "next-themes";
-import { ArrowLeft, Globe, Save, Upload, Tag, RefreshCw } from "lucide-react";
+import dynamic from "next/dynamic";
+import {
+  ArrowLeft,
+  Sparkles,
+  Globe,
+  Eye,
+  Save,
+  Upload,
+  Tag,
+  Bold,
+  Italic,
+  Heading,
+  List,
+  Link as LinkIcon,
+  Image,
+  Code,
+  Quote,
+  Type,
+  Palette,
+  AlignLeft,
+  EyeOff,
+  RefreshCw,
+} from "lucide-react";
+
+// Dynamic import for MDEditor to avoid SSR issues
+const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
 const generateSlug = (title: string) => {
   return title
@@ -18,17 +45,15 @@ const generateSlug = (title: string) => {
     .replace(/^-+|-+$/g, "");
 };
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function EditBlogPage({ params }: PageProps) {
+export default function EditBlogPage() {
   const router = useRouter();
+  const params = useParams();
+  const { data: session } = useSession();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [isSlugManual, setIsSlugManual] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -38,11 +63,12 @@ export default function EditBlogPage({ params }: PageProps) {
     published: false,
     thumbnail: "",
   });
-  const [isSlugManual, setIsSlugManual] = useState(false);
+
+  const blogId = params.id as string;
 
   useEffect(() => {
     fetchBlog();
-  }, [params.id]);
+  }, [blogId]);
 
   useEffect(() => {
     if (formData.title && !isSlugManual) {
@@ -56,7 +82,8 @@ export default function EditBlogPage({ params }: PageProps) {
 
   const fetchBlog = async () => {
     try {
-      const response = await blogAPI.getById(params.id);
+      setLoading(true);
+      const response = await blogAPI.getById(blogId);
       const blogData = response.data.data || response.data;
 
       setFormData({
@@ -68,9 +95,9 @@ export default function EditBlogPage({ params }: PageProps) {
         published: blogData.published || false,
         thumbnail: blogData.thumbnail || "",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching blog:", error);
-      toast.error("Failed to load blog");
+      toast.error("Failed to load blog data");
       router.push("/dashboard/blogs");
     } finally {
       setLoading(false);
@@ -79,7 +106,7 @@ export default function EditBlogPage({ params }: PageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUpdating(true);
+    setSaving(true);
 
     try {
       if (!formData.title || !formData.slug || !formData.content) {
@@ -87,7 +114,12 @@ export default function EditBlogPage({ params }: PageProps) {
         return;
       }
 
-      const response = await blogAPI.update(params.id, formData);
+      const blogData = {
+        ...formData,
+        authorId: session?.user?.id,
+      };
+
+      const response = await blogAPI.update(blogId, blogData);
 
       if (response.data.success) {
         toast.success("Blog updated successfully!");
@@ -104,7 +136,7 @@ export default function EditBlogPage({ params }: PageProps) {
         toast.error("Failed to update blog. Please try again.");
       }
     } finally {
-      setUpdating(false);
+      setSaving(false);
     }
   };
 
@@ -115,6 +147,13 @@ export default function EditBlogPage({ params }: PageProps) {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleContentChange = (value: string | undefined) => {
+    setFormData((prev) => ({
+      ...prev,
+      content: value || "",
     }));
   };
 
@@ -150,13 +189,101 @@ export default function EditBlogPage({ params }: PageProps) {
     }));
   };
 
+  const markdownShortcuts = [
+    {
+      name: "Heading 1",
+      shortcut: "# ",
+      description: "Add a main heading",
+      icon: <Heading size={16} />,
+    },
+    {
+      name: "Heading 2",
+      shortcut: "## ",
+      description: "Add a subheading",
+      icon: <Heading size={16} />,
+    },
+    {
+      name: "Bold",
+      shortcut: "**text**",
+      description: "Make text bold",
+      icon: <Bold size={16} />,
+    },
+    {
+      name: "Italic",
+      shortcut: "*text*",
+      description: "Make text italic",
+      icon: <Italic size={16} />,
+    },
+    {
+      name: "Link",
+      shortcut: "[text](url)",
+      description: "Add a hyperlink",
+      icon: <LinkIcon size={16} />,
+    },
+    {
+      name: "Image",
+      shortcut: "![alt](url)",
+      description: "Insert an image",
+      icon: <Image size={16} />,
+    },
+    {
+      name: "List",
+      shortcut: "- item",
+      description: "Create a bullet list",
+      icon: <List size={16} />,
+    },
+    {
+      name: "Code",
+      shortcut: "`code`",
+      description: "Inline code",
+      icon: <Code size={16} />,
+    },
+    {
+      name: "Blockquote",
+      shortcut: "> text",
+      description: "Add a quote",
+      icon: <Quote size={16} />,
+    },
+  ];
+
+  const insertMarkdown = (shortcut: string) => {
+    const textarea = document.querySelector("#content-editor textarea");
+    if (textarea) {
+      const start = (textarea as HTMLTextAreaElement).selectionStart;
+      const end = (textarea as HTMLTextAreaElement).selectionEnd;
+      const text = (textarea as HTMLTextAreaElement).value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+
+      let newText = "";
+      if (shortcut.includes("text")) {
+        newText = before + shortcut + after;
+      } else {
+        newText = before + shortcut + (after || "your text");
+      }
+
+      handleContentChange(newText);
+      setTimeout(() => {
+        (textarea as HTMLTextAreaElement).focus();
+        const newCursorPos = start + shortcut.length;
+        (textarea as HTMLTextAreaElement).setSelectionRange(
+          newCursorPos,
+          newCursorPos
+        );
+      }, 0);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-96">
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 animate-spin"></div>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 blur-xl opacity-20 animate-pulse"></div>
-        </div>
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          theme === "dark"
+            ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+            : "bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50"
+        }`}
+      >
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     );
   }
@@ -165,8 +292,8 @@ export default function EditBlogPage({ params }: PageProps) {
     <div
       className={`min-h-screen transition-colors duration-300 ${
         theme === "dark"
-          ? "bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900"
-          : "bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50"
+          ? "bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 text-white"
+          : "bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 text-gray-900"
       }`}
     >
       {/* Animated Background */}
@@ -183,7 +310,7 @@ export default function EditBlogPage({ params }: PageProps) {
         />
       </div>
 
-      <div className="relative z-10 space-y-8 p-4">
+      <div className="relative z-10 space-y-8 p-4 max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div className="space-y-3">
@@ -195,7 +322,7 @@ export default function EditBlogPage({ params }: PageProps) {
                     : "bg-white/80 backdrop-blur-md border border-purple-200"
                 }`}
               >
-                <RefreshCw
+                <Sparkles
                   className="text-purple-600 dark:text-purple-400"
                   size={24}
                 />
@@ -209,23 +336,36 @@ export default function EditBlogPage({ params }: PageProps) {
                     theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  Update your blog post
+                  Update your blog post with rich formatting
                 </p>
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => router.back()}
-            className={`group flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-              theme === "dark"
-                ? "bg-slate-800/50 hover:bg-slate-700/50 text-gray-300"
-                : "bg-white/80 hover:bg-gray-100 text-gray-700"
-            }`}
-          >
-            <ArrowLeft size={18} />
-            Back to Blogs
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.back()}
+              className={`group flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                theme === "dark"
+                  ? "bg-slate-800/50 hover:bg-slate-700/50 text-gray-300"
+                  : "bg-white/80 hover:bg-gray-100 text-gray-700"
+              }`}
+            >
+              <ArrowLeft size={18} />
+              Back to Blogs
+            </button>
+            <button
+              onClick={fetchBlog}
+              className={`group flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                theme === "dark"
+                  ? "bg-slate-800/50 hover:bg-slate-700/50 text-gray-300"
+                  : "bg-white/80 hover:bg-gray-100 text-gray-700"
+              }`}
+            >
+              <RefreshCw size={18} />
+              Reload
+            </button>
+          </div>
         </div>
 
         <form
@@ -338,30 +478,187 @@ export default function EditBlogPage({ params }: PageProps) {
             />
           </div>
 
-          {/* Content */}
+          {/* Content Editor */}
           <div>
-            <label
-              htmlFor="content"
-              className={`block text-sm font-medium mb-3 ${
-                theme === "dark" ? "text-gray-200" : "text-gray-700"
+            <div className="flex justify-between items-center mb-3">
+              <label
+                htmlFor="content"
+                className={`block text-sm font-medium ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-700"
+                }`}
+              >
+                Content *
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreview(!preview)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    theme === "dark"
+                      ? "bg-slate-700/50 hover:bg-slate-600/50 text-gray-300"
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  {preview ? (
+                    <>
+                      <EyeOff size={14} />
+                      Edit Mode
+                    </>
+                  ) : (
+                    <>
+                      <Eye size={14} />
+                      Preview Mode
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Markdown Shortcuts */}
+            <div
+              className={`mb-4 p-4 rounded-xl ${
+                theme === "dark"
+                  ? "bg-slate-900/50 border border-slate-700"
+                  : "bg-gray-50 border border-gray-200"
               }`}
             >
-              Content *
-            </label>
-            <textarea
-              id="content"
-              name="content"
-              rows={12}
-              required
-              value={formData.content}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-vertical ${
+              <div className="flex items-center gap-2 mb-3">
+                <Type
+                  size={16}
+                  className="text-purple-600 dark:text-purple-400"
+                />
+                <span
+                  className={`text-sm font-medium ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  Quick Formatting
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {markdownShortcuts.map((item) => (
+                  <button
+                    key={item.name}
+                    type="button"
+                    onClick={() => insertMarkdown(item.shortcut)}
+                    className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-colors ${
+                      theme === "dark"
+                        ? "bg-slate-800 hover:bg-slate-700 text-gray-300"
+                        : "bg-white hover:bg-gray-100 text-gray-700 border border-gray-200"
+                    }`}
+                    title={`${item.name}: ${item.shortcut}`}
+                  >
+                    <span
+                      className={`p-1 rounded ${
+                        theme === "dark" ? "bg-slate-700" : "bg-gray-100"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="truncate">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* MD Editor */}
+            <div
+              id="content-editor"
+              className="border rounded-xl overflow-hidden"
+            >
+              {typeof window !== "undefined" && (
+                <MDEditor
+                  value={formData.content}
+                  onChange={handleContentChange}
+                  height={400}
+                  preview={preview ? "preview" : "edit"}
+                  visiableDragbar={false}
+                  className={`${theme === "dark" ? "dark" : ""}`}
+                  data-color-mode={theme === "dark" ? "dark" : "light"}
+                  textareaProps={{
+                    placeholder:
+                      "Write your blog content here using Markdown...",
+                  }}
+                  previewOptions={{
+                    components: {
+                      // এটি লিংকগুলোকে নতুন ট্যাবে ওপেন করবে এবং এরর দিবে না
+                      a: ({ node, ...props }: any) => (
+                        <a
+                          {...props}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      ),
+                    },
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Markdown Guide */}
+            <div
+              className={`mt-4 p-4 rounded-xl ${
                 theme === "dark"
-                  ? "bg-slate-900/50 border border-purple-500/30 text-white placeholder-gray-400"
-                  : "bg-white/50 border border-purple-300 text-gray-900 placeholder-gray-500"
+                  ? "bg-slate-900/30 border border-slate-700"
+                  : "bg-purple-50 border border-purple-200"
               }`}
-              placeholder="Write your blog content here..."
-            />
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Palette
+                  size={16}
+                  className="text-purple-600 dark:text-purple-400"
+                />
+                <span
+                  className={`text-sm font-medium ${
+                    theme === "dark" ? "text-purple-300" : "text-purple-700"
+                  }`}
+                >
+                  Markdown Cheat Sheet
+                </span>
+              </div>
+              <div
+                className={`text-sm grid grid-cols-1 md:grid-cols-2 gap-2 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                <div>
+                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                    # Heading 1
+                  </code>
+                  <span className="ml-2">→ Large heading</span>
+                </div>
+                <div>
+                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                    ## Heading 2
+                  </code>
+                  <span className="ml-2">→ Medium heading</span>
+                </div>
+                <div>
+                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                    **bold**
+                  </code>
+                  <span className="ml-2">→ Bold text</span>
+                </div>
+                <div>
+                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                    *italic*
+                  </code>
+                  <span className="ml-2">→ Italic text</span>
+                </div>
+                <div>
+                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                    [link](url)
+                  </code>
+                  <span className="ml-2">→ Hyperlink</span>
+                </div>
+                <div>
+                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
+                    ![alt](url)
+                  </code>
+                  <span className="ml-2">→ Insert image</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Tags */}
@@ -384,7 +681,7 @@ export default function EditBlogPage({ params }: PageProps) {
             />
             <p
               className={`mt-2 text-sm ${
-                theme === "dark" ? "text-gray-400" : "text-gray-500"
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
               }`}
             >
               Press Enter, Space or Comma to add tags. Click × to remove.
@@ -417,43 +714,68 @@ export default function EditBlogPage({ params }: PageProps) {
               }`}
               placeholder="https://example.com/image.jpg"
             />
+            <p
+              className={`mt-2 text-sm ${
+                theme === "dark" ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Tip: Use Unsplash for free images. Example:
+              https://images.unsplash.com/photo-...
+            </p>
           </div>
 
           {/* Publish Checkbox */}
-          <div className="flex items-center p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10">
-            <input
-              type="checkbox"
-              id="published"
-              name="published"
-              checked={formData.published}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  published: e.target.checked,
-                }))
-              }
-              className="h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 rounded"
-            />
-            <label
-              htmlFor="published"
-              className={`ml-3 block text-sm font-medium ${
-                theme === "dark" ? "text-gray-200" : "text-gray-900"
-              }`}
-            >
-              Published
-            </label>
+          <div
+            className={`flex items-center p-4 rounded-xl ${
+              theme === "dark"
+                ? "bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20"
+                : "bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200"
+            }`}
+          >
+            <div className="flex items-center h-5">
+              <input
+                type="checkbox"
+                id="published"
+                name="published"
+                checked={formData.published}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    published: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 rounded"
+              />
+            </div>
+            <div className="ml-3">
+              <label
+                htmlFor="published"
+                className={`text-sm font-medium ${
+                  theme === "dark" ? "text-gray-200" : "text-gray-900"
+                }`}
+              >
+                Publish immediately
+              </label>
+              <p
+                className={`text-xs mt-1 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                If unchecked, the blog will be saved as draft
+              </p>
+            </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <button
               type="submit"
-              disabled={updating}
+              disabled={saving || !session?.user?.id}
               className="group relative flex-1"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl blur transition-all group-hover:blur-md opacity-70"></div>
               <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                {updating ? (
+                {saving ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-solid rounded-full animate-spin border-t-transparent"></div>
                     Updating...
@@ -461,7 +783,7 @@ export default function EditBlogPage({ params }: PageProps) {
                 ) : (
                   <>
                     <Save size={20} />
-                    Update Blog
+                    {formData.published ? "Update & Publish" : "Update Draft"}
                   </>
                 )}
               </div>
@@ -469,7 +791,17 @@ export default function EditBlogPage({ params }: PageProps) {
 
             <button
               type="button"
-              onClick={() => router.push("/dashboard/blogs")}
+              onClick={() => {
+                if (formData.content || formData.title) {
+                  if (
+                    confirm("Are you sure? Your unsaved changes will be lost.")
+                  ) {
+                    router.back();
+                  }
+                } else {
+                  router.back();
+                }
+              }}
               className={`flex-1 px-6 py-4 rounded-xl font-medium transition-all duration-200 ${
                 theme === "dark"
                   ? "bg-slate-700/50 hover:bg-slate-600/50 text-gray-300"
@@ -477,6 +809,28 @@ export default function EditBlogPage({ params }: PageProps) {
               }`}
             >
               Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPreview(!preview)}
+              className={`sm:flex-1 px-6 py-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                theme === "dark"
+                  ? "bg-slate-700/50 hover:bg-slate-600/50 text-gray-300"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+              }`}
+            >
+              {preview ? (
+                <>
+                  <AlignLeft size={20} />
+                  Edit Mode
+                </>
+              ) : (
+                <>
+                  <Eye size={20} />
+                  Preview
+                </>
+              )}
             </button>
           </div>
         </form>

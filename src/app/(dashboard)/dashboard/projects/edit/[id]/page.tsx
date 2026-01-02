@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { projectAPI } from "@/lib/api";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import TagsInput from "@/components/TagaInput";
+
 import { useTheme } from "next-themes";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Rocket,
 } from "lucide-react";
+import TagsInput from "@/components/TagaInput";
 
 interface PageProps {
   params: {
@@ -25,9 +26,15 @@ interface PageProps {
   };
 }
 
-export default function EditProjectPage({ params }: PageProps) {
+export default function EditProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
   const { theme } = useTheme();
+  const resolveParams = use(params);
+  const id = resolveParams.id;
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,12 +48,14 @@ export default function EditProjectPage({ params }: PageProps) {
   });
 
   useEffect(() => {
-    fetchProject();
-  }, [params.id]);
+    if (id) {
+      fetchProject();
+    }
+  }, [id]);
 
   const fetchProject = async () => {
     try {
-      const response = await projectAPI.getById(params.id);
+      const response = await projectAPI.getById(id);
       const projectData = response.data.data || response.data;
 
       setFormData({
@@ -69,6 +78,7 @@ export default function EditProjectPage({ params }: PageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setUpdating(true);
 
     try {
@@ -77,7 +87,7 @@ export default function EditProjectPage({ params }: PageProps) {
         return;
       }
 
-      const response = await projectAPI.update(params.id, formData);
+      const response = await projectAPI.update(id, formData);
 
       if (response.data.success) {
         toast.success("Project updated successfully!");

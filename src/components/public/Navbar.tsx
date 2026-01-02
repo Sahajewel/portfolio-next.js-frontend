@@ -1,164 +1,241 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import React, { useState, useEffect } from "react";
+import {
+  Sparkles,
+  LayoutDashboard,
+  Sun,
+  Moon,
+  X,
+  Menu,
+  LogIn,
+  LogOut,
+} from "lucide-react";
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+// Types Define করা হয়েছে
+interface NavbarProps {
+  theme?: string;
+  onThemeToggle?: () => void;
+  session?: any;
+}
 
-export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const { data: session } = useSession();
+export const Navbar = ({
+  theme = "dark",
+  onThemeToggle = () => {},
+  session = null,
+}: NavbarProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/about", label: "About" },
-    { href: "/projects", label: "Projects" },
-    { href: "/blogs", label: "Blogs" },
+  const menuItems = [
+    { name: "home", type: "scroll" },
+    { name: "about", type: "scroll" },
+    { name: "experience", type: "scroll" },
+    { name: "education", type: "scroll" },
+    { name: "skills", type: "scroll" },
+    { name: "projects", type: "link", href: "/projects" },
+    { name: "blogs", type: "link", href: "/blogs" },
+    { name: "achievements", type: "scroll" },
+    { name: "philosophy", type: "scroll" },
+    { name: "contact", type: "scroll" },
   ];
 
-  const isActive = (path: string) => pathname === path;
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
 
-  const handleLogout = async () => {
-    await signOut({ redirect: false });
-    window.location.href = "/";
+      const sections = menuItems
+        .filter((item) => item.type === "scroll")
+        .map((item) => item.name);
+
+      const current = sections.find((section) => {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          return rect.top <= 100 && rect.bottom >= 100;
+        }
+        return false;
+      });
+      if (current) setActiveSection(current);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (id: string) => {
+    setActiveSection(id);
+    setIsMenuOpen(false);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+    <nav
+      className={`fixed top-0 w-full z-[100] transition-all duration-300 ${
+        isScrolled
+          ? theme === "dark"
+            ? "bg-slate-900/95 backdrop-blur-md shadow-lg shadow-purple-500/10 border-b border-purple-500/20"
+            : "bg-white/95 backdrop-blur-md shadow-lg shadow-purple-200/10 border-b border-purple-200"
+          : "bg-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Portfolio
-              </span>
-            </Link>
-          </div>
+        <div className="flex justify-between items-center h-16">
+          <button
+            onClick={() => scrollToSection("home")}
+            className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 bg-clip-text text-transparent animate-pulse hover:scale-105 transition-transform"
+          >
+            <Sparkles className="inline mb-1 text-purple-500" size={20} />
+            Portfolio
+          </button>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="hidden md:flex space-x-1 items-center">
+            {menuItems.map((item) =>
+              item.type === "scroll" ? (
+                <button
+                  key={item.name}
+                  onClick={() => scrollToSection(item.name)}
+                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                    activeSection === item.name
+                      ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/50"
+                      : theme === "dark"
+                      ? "text-gray-200 hover:text-white hover:bg-white/10"
+                      : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
+                  }`}
+                >
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                </button>
+              ) : (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                    theme === "dark"
+                      ? "text-gray-200 hover:text-white hover:bg-white/10"
+                      : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
+                  }`}
+                >
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                </a>
+              )
+            )}
+
+            <div
+              className={`h-6 w-px mx-2 ${
+                theme === "dark" ? "bg-gray-600" : "bg-gray-300"
+              }`}
+            />
 
             {session ? (
-              <div className="flex items-center space-x-4">
-                <Link
+              <div className="flex items-center gap-2">
+                <a
                   href="/dashboard"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2 text-xs"
                 >
-                  Dashboard
-                </Link>
+                  <LayoutDashboard size={14} /> Dashboard
+                </a>
                 <button
-                  onClick={handleLogout}
-                  className="text-gray-700 hover:text-red-600 font-medium"
+                  onClick={() => console.log("Logout")}
+                  className="px-4 py-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-xs"
                 >
-                  Logout
+                  <LogOut size={14} /> Logout
                 </button>
               </div>
             ) : (
-              <Link
+              <a
                 href="/login"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2 text-xs"
               >
-                Login
-              </Link>
+                <LogIn size={14} /> Login
+              </a>
             )}
+
+            <button
+              onClick={onThemeToggle}
+              className={`ml-2 p-2 rounded-lg transition-all ${
+                theme === "dark" ? "hover:bg-gray-800" : "hover:bg-gray-100"
+              }`}
+            >
+              {theme === "dark" ? (
+                <Sun size={18} className="text-yellow-400" />
+              ) : (
+                <Moon size={18} className="text-gray-700" />
+              )}
+            </button>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile Menu Toggle */}
+          <div className="flex items-center gap-2 md:hidden">
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              onClick={onThemeToggle}
+              className={`p-2 rounded-lg transition-all ${
+                theme === "dark" ? "hover:bg-gray-800" : "hover:bg-gray-100"
+              }`}
             >
-              <svg
-                className="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                {isOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              {theme === "dark" ? (
+                <Sun size={18} className="text-yellow-400" />
+              ) : (
+                <Moon size={18} className="text-gray-700" />
+              )}
+            </button>
+            <button
+              className="p-2 hover:bg-white/10 rounded-lg transition-all"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive(item.href)
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              {session ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="block bg-blue-600 text-white px-3 py-2 rounded-md text-base font-medium hover:bg-blue-700 transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMenuOpen && (
+        <div
+          className={`md:hidden backdrop-blur-md border-t ${
+            theme === "dark"
+              ? "bg-slate-900/98 border-purple-500/20"
+              : "bg-white/98 border-purple-200"
+          }`}
+        >
+          <div className="px-4 pt-2 pb-3 space-y-1">
+            {menuItems.map((item) =>
+              item.type === "scroll" ? (
+                <button
+                  key={item.name}
+                  onClick={() => scrollToSection(item.name)}
+                  className={`block w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors ${
+                    activeSection === item.name
+                      ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
+                      : theme === "dark"
+                      ? "text-gray-200 hover:bg-gray-800"
+                      : "text-gray-800 hover:bg-gray-100"
+                  }`}
+                >
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                </button>
+              ) : (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block w-full text-left px-4 py-3 text-base font-medium rounded-lg ${
+                    theme === "dark"
+                      ? "text-gray-200 hover:bg-gray-800"
+                      : "text-gray-800 hover:bg-gray-100"
+                  }`}
+                >
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                </a>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
-}
+};

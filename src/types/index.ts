@@ -22,7 +22,7 @@ export interface Blog {
   metaDesc?: string;
   createdAt: string;
   updatedAt: string;
-  author: string | User;
+  author: string;
   readTime?: string;
   authorId: string;
 }

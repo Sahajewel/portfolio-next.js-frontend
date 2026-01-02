@@ -243,7 +243,7 @@ export default function LoginForm() {
           </form>
 
           {/* Demo Credentials (Optional) */}
-          <div
+          {/* <div
             className={`mt-6 p-4 rounded-xl border text-sm ${
               theme === "dark"
                 ? "bg-purple-900/20 border-purple-500/20 text-purple-300"
@@ -259,7 +259,7 @@ export default function LoginForm() {
                 Password: <span className="font-mono">Admin@123456</span>
               </p>
             </div>
-          </div>
+          </div> */}
 
           {/* Back to Home Link */}
           <div className="mt-8 pt-6 border-t border-purple-500/20">

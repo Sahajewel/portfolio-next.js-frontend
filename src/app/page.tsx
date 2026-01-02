@@ -120,20 +120,20 @@ const PortfolioHome = () => {
   const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const { data: session } = useSession();
-
+  const [mounted, setMounted] = useState(false);
+  const [result, setResult] = useState("");
   const menuItems = [
-    "home",
-    "about",
-    "experience",
-    "education",
-    "skills",
-    "projects",
-    "blogs",
-    "achievements",
-    "philosophy",
-    "contact",
+    { name: "home", type: "scroll" },
+    { name: "about", type: "scroll" },
+    { name: "experience", type: "scroll" },
+    { name: "education", type: "scroll" },
+    { name: "skills", type: "scroll" },
+    { name: "projects", type: "link", href: "/projects" }, // আলাদা পেজ
+    { name: "blogs", type: "link", href: "/blogs" }, // আলাদা পেজ
+    { name: "achievements", type: "scroll" },
+    { name: "philosophy", type: "scroll" },
+    { name: "contact", type: "scroll" },
   ];
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -423,9 +423,37 @@ const PortfolioHome = () => {
     );
   }
 
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setResult("Sending....");
+    const formData = new FormData(event.currentTarget);
+
+    // আপনার দেওয়া Access Key এখানে যোগ করা হয়েছে
+    formData.append("access_key", "5c19171c-1b1f-4a75-a65e-e0c808f9e7a7");
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setResult("Message Sent Successfully! ✅");
+        (event.target as HTMLFormElement).reset(); // ফর্মটি ক্লিয়ার করে দিবে
+      } else {
+        console.log("Error", data);
+        setResult(data.message);
+      }
+    } catch (error) {
+      setResult("Something went wrong, please try again.");
+    }
+  };
+  // first div overflow-hidden transition-colors duration-300
   return (
     <div
-      className={`min-h-screen relative overflow-hidden transition-colors duration-300 ${
+      className={`min-h-screen relative overflow-hidden transition-colors duration-300  ${
         theme === "dark"
           ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white"
           : "bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50 text-gray-900"
@@ -462,7 +490,6 @@ const PortfolioHome = () => {
         }}
       />
 
-      {/* Navbar */}
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
           isScrolled
@@ -479,27 +506,41 @@ const PortfolioHome = () => {
             </div>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex space-x-1 items-center">
-              {menuItems.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
-                    activeSection === item
-                      ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/50"
-                      : theme === "dark"
-                      ? "text-gray-200 hover:text-white hover:bg-white/10"
-                      : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
-                  }`}
-                >
-                  {item.charAt(0).toUpperCase() + item.slice(1)}
-                </button>
-              ))}
+            <div className="hidden xl:flex space-x-1 items-center">
+              {menuItems.map((item) =>
+                item.type === "scroll" ? (
+                  <button
+                    key={item.name}
+                    onClick={() => scrollToSection(item.name)}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                      activeSection === item.name
+                        ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/50"
+                        : theme === "dark"
+                        ? "text-gray-200 hover:text-white hover:bg-white/10"
+                        : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
+                    }`}
+                  >
+                    {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                  </button>
+                ) : (
+                  <Link
+                    key={item.name}
+                    href={item.href as string}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                      theme === "dark"
+                        ? "text-gray-200 hover:text-white hover:bg-white/10"
+                        : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"
+                    }`}
+                  >
+                    {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                  </Link>
+                )
+              )}
 
               {/* Divider */}
               <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
 
-              {/* Login / Dashboard Button */}
+              {/* Login / Dashboard Button  */}
               {session ? (
                 <div className="flex items-center gap-2">
                   <Link
@@ -541,7 +582,7 @@ const PortfolioHome = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2 xl:hidden">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
@@ -562,61 +603,96 @@ const PortfolioHome = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Theme aware fixed */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-slate-900/98 backdrop-blur-md border-t border-purple-500/20">
-            <div className="px-4 pt-2 pb-3 space-y-1">
-              {menuItems.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => {
-                    scrollToSection(item);
-                    setIsMenuOpen(false);
-                  }}
-                  className={`block w-full text-left px-4 py-3 text-base font-medium rounded-lg transition-colors ${
-                    activeSection === item
-                      ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
-                      : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {item.charAt(0).toUpperCase() + item.slice(1)}
-                </button>
-              ))}
-
-              {/* Mobile Login/Logout */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-                {session ? (
-                  <div className="space-y-2">
-                    <Link
-                      href="/dashboard"
-                      className="block px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold text-center"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <LayoutDashboard className="inline mr-2" size={16} />
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={() => {
-                        signOut();
-                        setIsMenuOpen(false);
-                      }}
-                      className="block w-full px-4 py-3 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg font-semibold text-center"
-                    >
-                      <LogOut className="inline mr-2" size={16} />
-                      Logout
-                    </button>
+          <div
+            className={`xl:hidden fixed inset-0 top-16 z-[9998] flex flex-col ${
+              theme === "dark"
+                ? "bg-[#3A1C61] text-white"
+                : "bg-white text-gray-900"
+            }`}
+            style={{ height: "calc(100vh - 64px)" }}
+          >
+            {/* ১. মেনু আইটেম এরিয়া - যেটা স্ক্রল হবে */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 custom-scrollbar">
+              <div className="flex flex-col space-y-1">
+                {menuItems.map((item) => (
+                  <div key={item.name}>
+                    {item.type === "scroll" ? (
+                      <button
+                        onClick={() => {
+                          scrollToSection(item.name);
+                          setIsMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all ${
+                          activeSection === item.name
+                            ? theme === "dark"
+                              ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30"
+                              : "bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 border border-purple-500/20"
+                            : theme === "dark"
+                            ? "text-gray-200 hover:bg-gray-800"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.href as string}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`block w-full px-4 py-3 rounded-xl text-base font-medium transition-all ${
+                          theme === "dark"
+                            ? "text-gray-200 hover:bg-gray-800"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                      </Link>
+                    )}
                   </div>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="block px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold text-center"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <LogIn className="inline mr-2" size={16} />
-                    Admin Login
-                  </Link>
-                )}
+                ))}
               </div>
+            </div>
+
+            {/* ২. নিচের ফিক্সড বাটন এরিয়া - যেটা সব সময় নিচে থাকবে */}
+            <div
+              className={`p-4 border-t ${
+                theme === "dark"
+                  ? "border-gray-800 bg-slate-900"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              {session ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/20"
+                  >
+                    <LayoutDashboard size={18} />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center justify-center gap-2 py-3 border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-semibold transition-all"
+                  >
+                    <LogOut size={18} />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/20"
+                >
+                  <LogIn size={18} />
+                  Admin Login
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -633,7 +709,7 @@ const PortfolioHome = () => {
               theme === "dark" ? "text-white" : "text-gray-900"
             }`}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-500/30 text-purple-600 dark:text-purple-300 font-semibold text-sm animate-bounce">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-500/30 text-white dark:text-purple-300 font-semibold text-sm animate-bounce">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
@@ -677,7 +753,12 @@ const PortfolioHome = () => {
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
-              <a href="/resume.pdf">
+              <a
+                href="/resume.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                download="Saha_Jewel_Resume.pdf"
+              >
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
                   Download Resume
@@ -1366,13 +1447,15 @@ const PortfolioHome = () => {
                   }`}
                 >
                   <div className="relative overflow-hidden h-56">
-                    <img
+                    <Image
                       src={
                         project.thumbnail ||
                         "https://images.unsplash.com/photo-1557821552-17105176677c?w=600&h=400&fit=crop"
                       }
                       alt={project.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      height={400}
+                      width={400}
                     />
                     <div
                       className={`absolute inset-0 bg-gradient-to-t opacity-80 ${
@@ -1463,6 +1546,15 @@ const PortfolioHome = () => {
               ))}
             </div>
           )}
+          <div className="text-center mt-12">
+            <button
+              onClick={() => (window.location.href = "/projects")}
+              className="px-8 py-3 border-2 border-purple-500 rounded-full font-semibold hover:bg-purple-500/10 transition-all flex items-center gap-2 mx-auto"
+            >
+              <BookOpen size={20} />
+              View All Projects
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1533,7 +1625,7 @@ const PortfolioHome = () => {
                         <span>
                           {typeof blog.author === "string"
                             ? blog.author
-                            : blog.author?.name || "Admin"}
+                            : blog.author || "Admin"}
                         </span>
                       </div>
                       <div
@@ -1798,10 +1890,13 @@ const PortfolioHome = () => {
             }`}
           >
             <h3 className="text-2xl font-bold mb-6">Send Me a Message</h3>
-            <form className="space-y-4">
+
+            <form onSubmit={onSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
+                  name="name"
+                  required
                   placeholder="Your Name"
                   className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all ${
                     theme === "dark"
@@ -1811,6 +1906,8 @@ const PortfolioHome = () => {
                 />
                 <input
                   type="email"
+                  name="email"
+                  required
                   placeholder="Your Email"
                   className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all ${
                     theme === "dark"
@@ -1821,6 +1918,7 @@ const PortfolioHome = () => {
               </div>
               <input
                 type="text"
+                name="subject"
                 placeholder="Subject"
                 className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all ${
                   theme === "dark"
@@ -1829,6 +1927,8 @@ const PortfolioHome = () => {
                 }`}
               />
               <textarea
+                name="message"
+                required
                 rows={5}
                 placeholder="Your Message"
                 className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all resize-none ${
@@ -1845,6 +1945,17 @@ const PortfolioHome = () => {
                 <ArrowRight size={20} />
               </button>
             </form>
+
+            {/* পাঠানোর পর স্ট্যাটাস দেখানোর জন্য */}
+            {result && (
+              <p
+                className={`mt-4 font-medium ${
+                  theme === "dark" ? "text-purple-400" : "text-purple-600"
+                }`}
+              >
+                {result}
+              </p>
+            )}
           </div>
         </div>
       </section>
