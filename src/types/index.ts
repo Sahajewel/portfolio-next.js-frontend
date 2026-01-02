@@ -26,7 +26,7 @@ export interface Blog {
   readTime?: string;
   authorId: string;
 }
-
+export type ProjectCategory = "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS";
 export interface Project {
   id: string;
   title: string;
@@ -38,6 +38,7 @@ export interface Project {
   featured: boolean;
   createdAt: string;
   updatedAt: string;
+  category: ProjectCategory;
 }
 
 export interface Resume {

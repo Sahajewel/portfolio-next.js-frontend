@@ -194,20 +194,20 @@ const PortfolioHome = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       setFeaturedProjects([
-        {
-          id: "1",
-          title: "E-Commerce Platform",
-          description:
-            "Full-stack e-commerce solution with payment integration.",
-          thumbnail:
-            "https://images.unsplash.com/photo-1557821552-17105176677c?w=600&h=400&fit=crop",
-          technologies: ["Next.js", "Node.js", "PostgreSQL"],
-          liveUrl: "#",
-          githubUrl: "#",
-          featured: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+        // {
+        //   id: "1",
+        //   title: "E-Commerce Platform",
+        //   description:
+        //     "Full-stack e-commerce solution with payment integration.",
+        //   thumbnail:
+        //     "https://images.unsplash.com/photo-1557821552-17105176677c?w=600&h=400&fit=crop",
+        //   technologies: ["Next.js", "Node.js", "PostgreSQL"],
+        //   liveUrl: "#",
+        //   githubUrl: "#",
+        //   featured: true,
+        //   createdAt: new Date().toISOString(),
+        //   updatedAt: new Date().toISOString(),
+        // },
       ]);
       setFeaturedBlogs([
         {

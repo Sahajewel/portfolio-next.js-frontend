@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { blogAPI } from "@/lib/api";
 import toast from "react-hot-toast";
-import TagsInput from "@/components/TagaInput";
+import TagsInput from "@/components/TagsInput";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import {

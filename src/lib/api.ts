@@ -14,6 +14,20 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+// Type definitions
+export type ProjectCategory = "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS";
+
+export interface CreateProjectData {
+  title: string;
+  description: string;
+  thumbnail?: string;
+  liveUrl?: string;
+  githubUrl?: string;
+  technologies: string[];
+  category?: ProjectCategory;
+  featured?: boolean;
+}
+
 // Auth API
 export const authAPI = {
   login: (data: { "email Or Username": string; password: string }) =>
@@ -34,14 +48,29 @@ export const blogAPI = {
 
 // Project API
 export const projectAPI = {
+  // Get all projects
   getAll: () => api.get("/project"),
-  // getById: (id: string) => api.get(`/project/${id}`),
+
+  // Get project by ID
   getById: (id: string) => {
-    console.log("Calling blog API with ID:", id);
+    console.log("Calling project API with ID:", id);
     return api.get(`/project/${id}`);
   },
-  create: (data: any) => api.post("/project/create-project", data),
+
+  // Get projects by category
+  getByCategory: (category: ProjectCategory) => {
+    console.log("Calling project API with category:", category);
+    return api.get(`/project/category/${category}`);
+  },
+
+  // Create project with category
+  create: (data: CreateProjectData) =>
+    api.post("/project/create-project", data),
+
+  // Update project
   update: (id: string, data: any) => api.patch(`/project/${id}`, data),
+
+  // Delete project
   delete: (id: string) => api.delete(`/project/${id}`),
 };
 
@@ -53,8 +82,8 @@ export const userAPI = {
   updateUser: (id: string, data: any) => api.patch(`/user/${id}`, data),
   deleteUser: (id: string) => api.delete(`/user/${id}`),
 };
-// lib/api.ts - Resume API যোগ করো
 
+// Resume API
 export const resumeAPI = {
   create: async (data: any) => {
     const response = await api.post("/resume/create-resume", data);

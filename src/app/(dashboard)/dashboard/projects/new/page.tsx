@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { projectAPI } from "@/lib/api";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import TagsInput from "@/components/TagaInput";
+
 import { useTheme } from "next-themes";
 import {
   ArrowLeft,
@@ -18,7 +18,11 @@ import {
   Upload,
   Tag,
   Rocket,
+  Layers,
+  FileCode,
+  FolderOpen,
 } from "lucide-react";
+import TagsInput from "@/components/TagsInput";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -31,6 +35,7 @@ export default function NewProjectPage() {
     liveUrl: "",
     githubUrl: "",
     technologies: [] as string[],
+    category: "FULLSTACK" as "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS",
     featured: false,
   });
 
@@ -44,7 +49,14 @@ export default function NewProjectPage() {
         return;
       }
 
-      const response = await projectAPI.create(formData);
+      // Ensure technologies is an array
+      const payload = {
+        ...formData,
+        technologies: formData.technologies || [],
+        category: formData.category || "FULLSTACK",
+      };
+
+      const response = await projectAPI.create(payload);
 
       if (response.data.success) {
         toast.success("Project created successfully!");
@@ -66,7 +78,9 @@ export default function NewProjectPage() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -81,6 +95,13 @@ export default function NewProjectPage() {
       technologies,
     }));
   };
+
+  const categories = [
+    { value: "FULLSTACK", label: "🚀 FullStack Project", icon: Layers },
+    { value: "HTMLCSSJS", label: "⚡ HTML/CSS/JS Project", icon: FileCode },
+    { value: "HTMLCSS", label: "🎨 HTML/CSS Project", icon: Code },
+    { value: "OTHERS", label: "📱 Other Project", icon: FolderOpen },
+  ];
 
   return (
     <div
@@ -207,6 +228,69 @@ export default function NewProjectPage() {
               }`}
               placeholder="Describe your project, technologies used, features, etc."
             />
+          </div>
+
+          {/* Category Selection */}
+          <div>
+            <label
+              htmlFor="category"
+              className={`block text-sm font-medium mb-3 ${
+                theme === "dark" ? "text-gray-200" : "text-gray-700"
+              }`}
+            >
+              Project Category *
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {categories.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        category: cat.value as any,
+                      }))
+                    }
+                    className={`p-4 rounded-xl border transition-all ${
+                      formData.category === cat.value
+                        ? theme === "dark"
+                          ? "bg-purple-500/20 border-purple-500/50 shadow-lg shadow-purple-500/20"
+                          : "bg-purple-100 border-purple-300 shadow-lg shadow-purple-200/20"
+                        : theme === "dark"
+                        ? "bg-slate-800/50 border-purple-500/20 hover:bg-slate-700/50"
+                        : "bg-white/50 border-purple-200 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          formData.category === cat.value
+                            ? "bg-purple-500 text-white"
+                            : theme === "dark"
+                            ? "bg-slate-700 text-gray-300"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        <Icon size={20} />
+                      </div>
+                      <span className="text-xs font-medium text-center">
+                        {cat.label.split(" ")[0]}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p
+              className={`mt-2 text-sm ${
+                theme === "dark" ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Selected:{" "}
+              {categories.find((c) => c.value === formData.category)?.label}
+            </p>
           </div>
 
           {/* Thumbnail URL */}
