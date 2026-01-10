@@ -71,7 +71,7 @@ const Navbar = ({}: NavbarProps) => {
             href="/"
             className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 bg-clip-text text-transparent animate-pulse"
           >
-            <Sparkles className="inline mb-1" size={20} /> Portfolio
+            <Sparkles className="inline mb-1" size={20} /> Saha Jewel Kumar
           </Link>
 
           {/* Desktop Menu */}

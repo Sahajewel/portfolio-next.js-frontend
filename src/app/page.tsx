@@ -209,26 +209,26 @@ const PortfolioHome = () => {
         //   updatedAt: new Date().toISOString(),
         // },
       ]);
-      setFeaturedBlogs([
-        {
-          id: "1",
-          title: "Building Scalable Applications",
-          slug: "building-scalable-applications",
-          content:
-            "Learn how to build scalable applications with modern patterns.",
-          excerpt:
-            "Learn how to build scalable applications with modern patterns.",
-          thumbnail:
-            "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop",
-          published: true,
-          views: 0,
-          tags: ["React", "JavaScript"],
-          author: "John Doe",
-          authorId: "admin-1",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]);
+      // setFeaturedBlogs([
+      //   {
+      //     id: "1",
+      //     title: "Building Scalable Applications",
+      //     slug: "building-scalable-applications",
+      //     content:
+      //       "Learn how to build scalable applications with modern patterns.",
+      //     excerpt:
+      //       "Learn how to build scalable applications with modern patterns.",
+      //     thumbnail:
+      //       "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop",
+      //     published: true,
+      //     views: 0,
+      //     tags: ["React", "JavaScript"],
+      //     author: "John Doe",
+      //     authorId: "admin-1",
+      //     createdAt: new Date().toISOString(),
+      //     updatedAt: new Date().toISOString(),
+      //   },
+      // ]);
     } finally {
       setLoading(false);
     }
@@ -429,7 +429,10 @@ const PortfolioHome = () => {
     const formData = new FormData(event.currentTarget);
 
     // আপনার দেওয়া Access Key এখানে যোগ করা হয়েছে
-    formData.append("access_key", "5c19171c-1b1f-4a75-a65e-e0c808f9e7a7");
+    formData.append(
+      "access_key",
+      process.env.NEXT_PUBLIC_WEB3FORMS_PROJECT_ID as string
+    );
 
     try {
       const response = await fetch("https://api.web3forms.com/submit", {
@@ -501,8 +504,8 @@ const PortfolioHome = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 bg-clip-text text-transparent animate-pulse">
-              <Sparkles className="inline mb-1" size={20} /> Portfolio
+            <div className="text-2xl  font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 bg-clip-text text-transparent animate-pulse">
+              <Sparkles className="inline mb-1" size={20} /> SAHA
             </div>
 
             {/* Desktop Menu */}
@@ -709,7 +712,7 @@ const PortfolioHome = () => {
               theme === "dark" ? "text-white" : "text-gray-900"
             }`}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-500/30 text-white dark:text-purple-300 font-semibold text-sm animate-bounce">
+            <div className="inline-flex mt-5 items-center gap-2 px-4 py-2 bg-purple-500/20 backdrop-blur-sm rounded-full border border-purple-500/30 text-white dark:text-purple-300 font-semibold text-sm animate-bounce">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
@@ -737,7 +740,8 @@ const PortfolioHome = () => {
                   theme === "dark" ? "text-gray-300" : "text-gray-700"
                 }`}
               >
-                Full Stack Enthusiast | Building Scalable Solutions
+                Full Stack Developer | Building Scalable, High-Performance Web
+                Applications
               </h2>
             </div>
 
@@ -746,10 +750,10 @@ const PortfolioHome = () => {
                 theme === "dark" ? "text-gray-300" : "text-gray-600"
               }`}
             >
-              I specialize in bridging the gap between robust backend systems
-              and intuitive frontend interfaces. Currently mastering the modern
-              web ecosystem to build high-performance applications that solve
-              real-world problems.
+              I specialize in developing modern web applications using the MERN
+              stack and Next.js, focusing on clean architecture, robust backend
+              systems, and intuitive frontend experiences that solve real-world
+              problems.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -848,7 +852,9 @@ const PortfolioHome = () => {
                   >
                     Stack Focus
                   </p>
-                  <p className="font-semibold">MERN + Next.js</p>
+                  <p className="font-semibold">
+                    MERN Stack • Next.js • TypeScript • Prisma • PostgreSQL
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -974,33 +980,37 @@ const PortfolioHome = () => {
               }`}
             >
               <p className="text-xl font-semibold">
-                👋 Hello! I'm a dedicated Full Stack Developer with a passion
-                for building scalable web applications and solving complex
-                problems.
+                👋 Hello! I'm a dedicated Full Stack Developer with a strong
+                focus on building scalable, high-performance web applications
+                and solving real-world problems.
               </p>
               <p>
-                My journey in programming started{" "}
+                My programming journey began over{" "}
                 <span className="text-purple-400 font-semibold">
-                  2 years ago
+                  two years ago,
                 </span>
-                . Since then, I've spent countless hours mastering the modern
-                web ecosystem, focusing on writing clean, efficient, and
-                maintainable code.
+                and since then I have continuously worked on mastering the
+                modern web ecosystem. I prioritize writing clean, efficient, and
+                maintainable code while following best practices in both
+                frontend and backend development.
               </p>
               <p>
                 I specialize in the{" "}
                 <span className="text-pink-400 font-semibold">
                   MERN stack and Next.js
                 </span>
-                . I love the challenge of turning a complex idea into a
-                functional, user-friendly digital reality, from database schema
-                design to a polished frontend.
+                working with technologies such as TypeScript, Prisma, and
+                PostgreSQL to design robust backend systems and intuitive,
+                user-friendly interfaces. From database schema design to
+                polished frontend experiences, I enjoy turning complex ideas
+                into reliable digital solutions.
               </p>
               <p>
-                When I'm not coding, I'm usually deep-diving into new
-                documentation, exploring system design, or building side
-                projects to sharpen my skills. I believe that being a developer
-                is a lifelong journey of learning and growth.
+                Currently based in Japan, I actively sharpen my skills by
+                studying system design, exploring new documentation, and
+                building side projects that reflect real-world use cases. I
+                strongly believe that being a developer is a lifelong journey of
+                learning, improvement, and curiosity.
               </p>
               <p className="text-purple-400 italic">
                 💡 "Code is like humor. When you have to explain it, it's bad."
@@ -1436,17 +1446,18 @@ const PortfolioHome = () => {
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
               {featuredProjects.map((project: Project) => (
                 <div
                   key={project.id}
-                  className={`group rounded-2xl overflow-hidden border transition-all hover:scale-105 hover:shadow-2xl ${
+                  className={`group rounded-2xl overflow-hidden border transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-full ${
                     theme === "dark"
                       ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/20"
                       : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/20"
                   }`}
                 >
-                  <div className="relative overflow-hidden h-56">
+                  {/* Fixed height image container */}
+                  <div className="relative overflow-hidden h-56 flex-shrink-0">
                     <Image
                       src={
                         project.thumbnail ||
@@ -1471,44 +1482,59 @@ const PortfolioHome = () => {
                       </div>
                     )}
                     <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="text-2xl font-bold text-white mb-1">
+                      <h3 className="text-2xl font-bold text-white mb-1 line-clamp-1">
                         {project.title}
                       </h3>
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4">
-                    <p
-                      className={`text-sm leading-relaxed ${
-                        theme === "dark" ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      {project.description}
-                    </p>
+                  {/* Content area with flex-grow */}
+                  <div className="p-6 space-y-4 flex-grow flex flex-col">
+                    <div className="flex-grow">
+                      <p
+                        className={`text-sm leading-relaxed line-clamp-3 mb-4 ${
+                          theme === "dark" ? "text-gray-300" : "text-gray-600"
+                        }`}
+                      >
+                        {project.description}
+                      </p>
 
-                    <div>
-                      <h4 className="text-xs font-semibold text-purple-400 mb-2">
-                        Technologies:
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {(project.technologies || [])
-                          .slice(0, 5)
-                          .map((tech: string, index: number) => (
+                      <div>
+                        <h4 className="text-xs font-semibold text-purple-400 mb-2">
+                          Technologies:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(project.technologies || [])
+                            .slice(0, 4)
+                            .map((tech: string, index: number) => (
+                              <span
+                                key={index}
+                                className={`px-2 py-1 rounded text-xs border ${
+                                  theme === "dark"
+                                    ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                    : "bg-purple-100 text-purple-700 border-purple-200"
+                                }`}
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          {(project.technologies || []).length > 4 && (
                             <span
-                              key={index}
                               className={`px-2 py-1 rounded text-xs border ${
                                 theme === "dark"
                                   ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
                                   : "bg-purple-100 text-purple-700 border-purple-200"
                               }`}
                             >
-                              {tech}
+                              +{project.technologies.length - 4}
                             </span>
-                          ))}
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    {/* Buttons at bottom */}
+                    <div className="flex gap-3 pt-2 mt-auto">
                       {project.liveUrl && (
                         <a
                           href={project.liveUrl}
@@ -1586,24 +1612,27 @@ const PortfolioHome = () => {
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
               {featuredBlogs.map((blog: Blog) => (
                 <div
                   key={blog.id}
-                  className={`group rounded-2xl overflow-hidden border transition-all hover:scale-105 hover:shadow-2xl ${
+                  className={`group rounded-2xl overflow-hidden border transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-full ${
                     theme === "dark"
                       ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/20"
                       : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/20"
                   }`}
                 >
-                  <div className="relative overflow-hidden h-48">
-                    <img
+                  {/* Fixed height image container */}
+                  <div className="relative overflow-hidden h-48 flex-shrink-0">
+                    <Image
                       src={
                         blog.thumbnail ||
                         "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop"
                       }
                       alt={blog.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      height={400}
+                      width={400}
                     />
                     <div
                       className={`absolute inset-0 bg-gradient-to-t opacity-80 ${
@@ -1614,66 +1643,86 @@ const PortfolioHome = () => {
                     />
                   </div>
 
-                  <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <div
-                        className={`flex items-center gap-2 ${
+                  {/* Content area with flex-grow */}
+                  <div className="p-6 space-y-4 flex-grow flex flex-col">
+                    <div className="flex-grow">
+                      <div className="flex items-center justify-between text-sm mb-3">
+                        <div
+                          className={`flex items-center gap-2 ${
+                            theme === "dark" ? "text-gray-300" : "text-gray-600"
+                          }`}
+                        >
+                          <User size={14} />
+                          <span className="line-clamp-1">
+                            {typeof blog.author === "string"
+                              ? blog.author
+                              : blog.author || "Admin"}
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center gap-2 ${
+                            theme === "dark" ? "text-gray-300" : "text-gray-600"
+                          }`}
+                        >
+                          <Clock size={14} />
+                          <span className="whitespace-nowrap">
+                            {Math.ceil(
+                              (blog.content?.split(" ").length || 0) / 200
+                            )}{" "}
+                            min
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-bold mb-3 line-clamp-2">
+                        {blog.title}
+                      </h3>
+
+                      <p
+                        className={`text-sm leading-relaxed line-clamp-3 mb-4 ${
                           theme === "dark" ? "text-gray-300" : "text-gray-600"
                         }`}
                       >
-                        <User size={14} />
-                        <span>
-                          {typeof blog.author === "string"
-                            ? blog.author
-                            : blog.author || "Admin"}
-                        </span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 ${
-                          theme === "dark" ? "text-gray-300" : "text-gray-600"
-                        }`}
-                      >
-                        <Clock size={14} />
-                        <span>5 min</span>
-                      </div>
-                    </div>
+                        {blog.excerpt ||
+                          blog.content?.substring(0, 150) ||
+                          "Read more about this topic..."}
+                      </p>
 
-                    <h3 className="text-xl font-bold mb-2 line-clamp-2">
-                      {blog.title}
-                    </h3>
-
-                    <p
-                      className={`text-sm leading-relaxed line-clamp-3 ${
-                        theme === "dark" ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      {blog.excerpt ||
-                        blog.content?.substring(0, 150) ||
-                        "Read more about this topic..."}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2">
-                      {(blog.tags || [])
-                        .slice(0, 3)
-                        .map((tag: string, index: number) => (
+                      <div className="flex flex-wrap gap-2">
+                        {(blog.tags || [])
+                          .slice(0, 3)
+                          .map((tag: string, index: number) => (
+                            <span
+                              key={index}
+                              className={`px-2 py-1 rounded text-xs border ${
+                                theme === "dark"
+                                  ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                                  : "bg-purple-100 text-purple-700 border-purple-200"
+                              }`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        {(blog.tags || []).length > 3 && (
                           <span
-                            key={index}
                             className={`px-2 py-1 rounded text-xs border ${
                               theme === "dark"
                                 ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
                                 : "bg-purple-100 text-purple-700 border-purple-200"
                             }`}
                           >
-                            {tag}
+                            +{blog.tags.length - 3}
                           </span>
-                        ))}
+                        )}
+                      </div>
                     </div>
 
+                    {/* Button at bottom */}
                     <button
                       onClick={() =>
                         (window.location.href = `/blogs/${blog.id}`)
                       }
-                      className="w-full mt-4 px-4 py-2.5 text-purple-600 dark:text-purple-400 font-semibold rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 group"
+                      className="w-full mt-auto px-4 py-2.5 text-purple-600 dark:text-purple-400 font-semibold rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 group"
                     >
                       <Book size={16} />
                       Read More

@@ -16,7 +16,6 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  Share2,
   Bookmark,
   MessageCircle,
   Facebook,
@@ -25,6 +24,7 @@ import {
   Copy,
   Check,
   Heart,
+  Globe,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
@@ -46,7 +46,10 @@ const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
 
   if (inline) {
     return (
-      <code className={className} {...props}>
+      <code
+        className={`bg-gray-100 dark:bg-gray-800/70 px-1 py-0.5 rounded text-sm font-medium ${className}`}
+        {...props}
+      >
         {children}
       </code>
     );
@@ -60,7 +63,10 @@ const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
         PreTag="div"
         className="rounded-lg"
         showLineNumbers
-        lineNumberStyle={{ minWidth: "2.5em" }}
+        lineNumberStyle={{
+          minWidth: "2.5em",
+          color: theme === "dark" ? "#94a3b8" : "#64748b",
+        }}
         {...props}
       >
         {String(children).replace(/\n$/, "")}
@@ -75,6 +81,7 @@ interface PageProps {
 
 export default function BlogPage({ params }: PageProps) {
   const { theme } = useTheme();
+  const [language, setLanguage] = useState<"en" | "bn">("en");
   const [blog, setBlog] = useState<Blog | null>(null);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,10 +100,9 @@ export default function BlogPage({ params }: PageProps) {
     const fetchParams = async () => {
       const { id } = await params;
       setBlogId(id);
-      fetchBlog(id);
-      fetchAllBlogs();
+      await fetchBlog(id);
+      await fetchAllBlogs();
 
-      // Load saved and liked status from localStorage
       const savedBlogs = JSON.parse(localStorage.getItem("savedBlogs") || "[]");
       const likedBlogs = JSON.parse(localStorage.getItem("likedBlogs") || "[]");
       const savedComments = JSON.parse(
@@ -118,23 +124,6 @@ export default function BlogPage({ params }: PageProps) {
       setBlog(blogData);
     } catch (error) {
       console.error("Error fetching blog:", error);
-      setBlog({
-        id,
-        title: "Building Scalable Applications",
-        slug: "building-scalable-applications",
-        content: `## Introduction\n\nBuilding scalable applications is crucial in today's fast-paced digital world. In this article, we'll explore the key principles and patterns that help create robust, scalable web applications.\n\n\`\`\`javascript\n// Example code for scalable architecture\nconst express = require('express');\nconst app = express();\n\n// Middleware for scalability\napp.use(express.json());\napp.use(cors());\n\n// Load balancing example\napp.get('/api/data', async (req, res) => {\n  try {\n    const data = await fetchDataFromDatabase();\n    res.json({ success: true, data });\n  } catch (error) {\n    res.status(500).json({ success: false, error: error.message });\n  }\n});\n\`\`\`\n\n## Why Scalability Matters\n\nScalability ensures your application can handle growth - more users, more data, and more complex features without compromising performance.\n\n### Key Principles\n\n1. **Microservices Architecture**: Break down your application into smaller, independent services\n2. **Stateless Design**: Design services to be stateless for better horizontal scaling\n3. **Caching Strategies**: Implement intelligent caching to reduce database load\n4. **Database Optimization**: Use appropriate database patterns and indexing\n5. **Asynchronous Processing**: Handle long-running tasks asynchronously\n\n| Feature | Monolithic | Microservices |\n|---------|------------|---------------|\n| Scaling | Vertical | Horizontal |\n| Deployment | Single unit | Independent |\n| Fault Isolation | Poor | Excellent |\n\n## Conclusion\n\nScalability is not an afterthought - it should be considered from day one. By following these principles and continuously monitoring performance, you can build applications that grow with your business needs.`,
-        excerpt:
-          "Learn how to build scalable applications with modern patterns.",
-        thumbnail:
-          "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=500&fit=crop",
-        published: true,
-        views: 152,
-        tags: ["React", "JavaScript", "Next.js", "Scalability", "Architecture"],
-        author: "Saha Jewel Kumar",
-        authorId: "1",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
     } finally {
       setLoading(false);
     }
@@ -143,27 +132,28 @@ export default function BlogPage({ params }: PageProps) {
   const fetchAllBlogs = async () => {
     try {
       const response = await blogAPI.getAll();
-      const blogsData = response.data.data || response.data || [];
-      setBlogs(blogsData);
+      setBlogs(response.data.data || response.data || []);
     } catch (error) {
       console.error("Error fetching all blogs:", error);
     }
   };
 
-  const getCurrentBlogIndex = () => {
-    return blogs.findIndex((b) => b.id === blogId);
-  };
+  const displayTitle =
+    language === "en" ? blog?.title : blog?.titleBn || blog?.title || "";
+  const displayContent =
+    language === "en" ? blog?.content : blog?.contentBn || blog?.content || "";
+  const displayExcerpt =
+    language === "en" ? blog?.excerpt : blog?.excerptBn || blog?.excerpt || "";
 
+  const getCurrentBlogIndex = () => blogs.findIndex((b) => b.id === blogId);
   const getPreviousBlog = () => {
     const index = getCurrentBlogIndex();
     return index > 0 ? blogs[index - 1] : null;
   };
-
   const getNextBlog = () => {
     const index = getCurrentBlogIndex();
     return index < blogs.length - 1 ? blogs[index + 1] : null;
   };
-
   const getRelatedBlogs = () => {
     return blogs
       .filter(
@@ -175,8 +165,8 @@ export default function BlogPage({ params }: PageProps) {
 
   const handleShare = async () => {
     const shareData = {
-      title: blog?.title || "Check out this blog post",
-      text: blog?.excerpt || "Interesting read",
+      title: displayTitle || "Check out this blog post",
+      text: displayExcerpt || "Interesting read",
       url: window.location.href,
     };
 
@@ -188,7 +178,6 @@ export default function BlogPage({ params }: PageProps) {
         console.log("Error sharing:", err);
       }
     } else {
-      // Fallback: Copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       toast.success("Link copied to clipboard!");
@@ -198,10 +187,9 @@ export default function BlogPage({ params }: PageProps) {
 
   const handleSave = () => {
     const savedBlogs = JSON.parse(localStorage.getItem("savedBlogs") || "[]");
-
     if (isSaved) {
-      const newSavedBlogs = savedBlogs.filter((id: string) => id !== blogId);
-      localStorage.setItem("savedBlogs", JSON.stringify(newSavedBlogs));
+      const newSaved = savedBlogs.filter((id: string) => id !== blogId);
+      localStorage.setItem("savedBlogs", JSON.stringify(newSaved));
       setIsSaved(false);
       toast.success("Removed from saved posts");
     } else {
@@ -214,10 +202,9 @@ export default function BlogPage({ params }: PageProps) {
 
   const handleLike = () => {
     const likedBlogs = JSON.parse(localStorage.getItem("likedBlogs") || "[]");
-
     if (isLiked) {
-      const newLikedBlogs = likedBlogs.filter((id: string) => id !== blogId);
-      localStorage.setItem("likedBlogs", JSON.stringify(newLikedBlogs));
+      const newLiked = likedBlogs.filter((id: string) => id !== blogId);
+      localStorage.setItem("likedBlogs", JSON.stringify(newLiked));
       setIsLiked(false);
       setLikeCount((prev) => prev - 1);
       toast.success("Removed like");
@@ -235,7 +222,6 @@ export default function BlogPage({ params }: PageProps) {
       toast.error("Please enter a comment");
       return;
     }
-
     const newComments = [...comments, newComment];
     setComments(newComments);
     setNewComment("");
@@ -249,9 +235,9 @@ export default function BlogPage({ params }: PageProps) {
 
   const shareOnSocial = (platform: string) => {
     const url = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(blog?.title || "");
-
+    const title = encodeURIComponent(displayTitle || "");
     let shareUrl = "";
+
     switch (platform) {
       case "facebook":
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
@@ -272,7 +258,7 @@ export default function BlogPage({ params }: PageProps) {
       <div
         className={`min-h-screen flex items-center justify-center ${
           theme === "dark"
-            ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+            ? "bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950"
             : "bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50"
         }`}
       >
@@ -282,20 +268,23 @@ export default function BlogPage({ params }: PageProps) {
   }
 
   if (!blog) {
-    notFound();
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl text-gray-900 dark:text-gray-100">
+        Blog not found
+      </div>
+    );
   }
 
-  const previousBlog = getPreviousBlog();
-  const nextBlog = getNextBlog();
-  const relatedBlogs = getRelatedBlogs();
+  const isDark = theme === "dark";
 
   return (
     <div>
-      <Navbar></Navbar>
+      <Navbar />
+
       <div
         className={`min-h-screen relative overflow-hidden transition-colors duration-300 ${
-          theme === "dark"
-            ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white"
+          isDark
+            ? "bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-gray-100"
             : "bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50 text-gray-900"
         }`}
       >
@@ -303,772 +292,579 @@ export default function BlogPage({ params }: PageProps) {
         <div className="fixed inset-0 opacity-30 pointer-events-none">
           <div
             className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-pulse ${
-              theme === "dark" ? "bg-purple-500" : "bg-purple-200"
+              isDark ? "bg-purple-600" : "bg-purple-200"
             }`}
           />
           <div
             className={`absolute top-1/3 right-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-2000 ${
-              theme === "dark" ? "bg-pink-500" : "bg-pink-200"
+              isDark ? "bg-pink-600" : "bg-pink-200"
             }`}
           />
           <div
             className={`absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-4000 ${
-              theme === "dark" ? "bg-blue-500" : "bg-blue-200"
+              isDark ? "bg-blue-600" : "bg-blue-200"
             }`}
           />
         </div>
 
-        <div className="relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-20">
-            {/* Back Button */}
-            <Link
-              href="/blogs"
-              className="inline-flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors mb-8 group"
-            >
-              <ArrowLeft
-                size={18}
-                className="group-hover:-translate-x-1 transition-transform"
-              />
-              Back to All Posts
-            </Link>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-20">
+          {/* Back Button */}
+          <Link
+            href="/blogs"
+            className={`inline-flex items-center gap-2 transition-colors mb-8 group ${
+              isDark
+                ? "text-purple-400 hover:text-purple-300"
+                : "text-purple-600 hover:text-purple-800"
+            }`}
+          >
+            <ArrowLeft
+              size={18}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            Back to All Posts
+          </Link>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Main Content - 2/3 width */}
-              <div className="lg:w-2/3">
-                {/* Blog Card */}
-                <div
-                  className={`rounded-2xl border backdrop-blur-md overflow-hidden hover:shadow-2xl transition-all duration-300 ${
-                    theme === "dark"
-                      ? "bg-slate-800/50 backdrop-blur-md border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/20"
-                      : "bg-white/80 backdrop-blur-md border-purple-200 hover:border-purple-300 hover:shadow-purple-200/20"
-                  }`}
-                >
-                  {/* Blog Thumbnail */}
-                  {blog.thumbnail && (
-                    <div className="relative w-full h-64 md:h-96">
-                      <Image
-                        src={blog.thumbnail}
-                        alt={blog.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
-                        className="object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main Content */}
+            <div className="lg:w-2/3">
+              <div
+                className={`rounded-2xl border backdrop-blur-md overflow-hidden ${
+                  isDark
+                    ? "bg-slate-900/50 border-purple-600/30"
+                    : "bg-white/80 border-purple-200"
+                }`}
+              >
+                {blog.thumbnail && (
+                  <div className="relative w-full h-64 md:h-96">
+                    <Image
+                      src={blog.thumbnail}
+                      alt={displayTitle || "blog image"}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  </div>
+                )}
+
+                <div className="p-6 md:p-8">
+                  {/* Language Toggle */}
+                  <div className="flex justify-end mb-6">
+                    <button
+                      onClick={() =>
+                        setLanguage((prev) => (prev === "en" ? "bn" : "en"))
+                      }
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all border font-medium shadow-sm ${
+                        isDark
+                          ? "bg-purple-900/50 border-purple-600/40 text-purple-200 hover:bg-purple-800/60"
+                          : "bg-purple-600/10 border-purple-500/30 text-purple-800 hover:bg-purple-600/20"
+                      }`}
+                    >
+                      <Globe size={18} />
+                      {language === "en" ? "বাংলায় দেখুন" : "View in English"}
+                    </button>
+                  </div>
+
+                  <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                    {displayTitle}
+                  </h1>
+
+                  {displayExcerpt && (
+                    <p
+                      className={`text-xl mb-8 leading-relaxed ${
+                        isDark ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      {displayExcerpt}
+                    </p>
+                  )}
+
+                  {/* Metadata */}
+                  <div
+                    className={`flex flex-wrap items-center gap-6 text-sm mb-8 ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-purple-400" />
+                      <span>{blog.author || "Saha Jewel Kumar"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={16} className="text-purple-400" />
+                      <span>
+                        {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} className="text-purple-400" />
+                      <span>
+                        {Math.ceil(
+                          (displayContent?.split(" ").length || 0) / 200
+                        )}{" "}
+                        min read
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  {blog.tags?.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-10">
+                      {blog.tags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full font-medium ${
+                            isDark
+                              ? "bg-purple-900/50 text-purple-200 border border-purple-700/40"
+                              : "bg-purple-100 text-purple-800 border border-purple-200"
+                          }`}
+                        >
+                          <Tag size={10} />
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   )}
 
-                  {/* Blog Content */}
-                  <div className="p-6 md:p-8">
-                    {/* Title and Metadata */}
-                    <div className="mb-8">
-                      <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        {blog.title}
-                      </h1>
+                  {/* Main Content - Improved for dark mode */}
+                  <div
+                    className={`prose prose-lg max-w-none ${
+                      isDark ? "prose-invert prose-headings:text-gray-100" : ""
+                    }`}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{ code: CodeBlock }}
+                    >
+                      {displayContent}
+                    </ReactMarkdown>
+                  </div>
 
-                      <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
-                        <div className="flex items-center gap-2">
-                          <User size={16} className="text-purple-500" />
-                          <span
-                            className={
-                              theme === "dark"
-                                ? "text-gray-300"
-                                : "text-gray-700"
-                            }
-                          >
-                            {blog.author || "Saha Jewel Kumar"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-purple-500" />
-                          <span
-                            className={
-                              theme === "dark"
-                                ? "text-gray-400"
-                                : "text-gray-600"
-                            }
-                          >
-                            {new Date(blog.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              }
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock size={16} className="text-purple-500" />
-                          <span
-                            className={
-                              theme === "dark"
-                                ? "text-gray-400"
-                                : "text-gray-600"
-                            }
-                          >
-                            {Math.ceil(
-                              (blog.content?.split(" ").length || 0) / 200
-                            )}{" "}
-                            min read
-                          </span>
-                        </div>
+                  {/* Action Buttons */}
+                  <div
+                    className={`pt-8 border-t ${
+                      isDark ? "border-gray-800" : "border-gray-200"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={handleLike}
+                          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
+                            isLiked
+                              ? "bg-red-600 text-white hover:bg-red-700"
+                              : isDark
+                              ? "bg-slate-800 text-gray-200 hover:bg-slate-700 border border-slate-700"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200"
+                          }`}
+                        >
+                          <Heart
+                            size={18}
+                            fill={isLiked ? "currentColor" : "none"}
+                          />
+                          Like ({likeCount})
+                        </button>
+
+                        <button
+                          onClick={handleSave}
+                          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
+                            isSaved
+                              ? "bg-yellow-600 text-white hover:bg-yellow-700"
+                              : isDark
+                              ? "bg-slate-800 text-gray-200 hover:bg-slate-700 border border-slate-700"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200"
+                          }`}
+                        >
+                          <Bookmark
+                            size={18}
+                            fill={isSaved ? "currentColor" : "none"}
+                          />
+                          {isSaved ? "Saved" : "Save"}
+                        </button>
+
+                        <button
+                          onClick={scrollToComments}
+                          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
+                            isDark
+                              ? "bg-slate-800 text-gray-200 hover:bg-slate-700 border border-slate-700"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200"
+                          }`}
+                        >
+                          <MessageCircle size={18} />
+                          Comment
+                        </button>
                       </div>
 
-                      {/* Tags */}
-                      {blog.tags && blog.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-6">
-                          {blog.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full font-medium ${
-                                theme === "dark"
-                                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                                  : "bg-purple-100 text-purple-700 border border-purple-200"
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-600"}
+                        >
+                          Share:
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => shareOnSocial("facebook")}
+                            className="p-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                            title="Share on Facebook"
+                          >
+                            <Facebook size={16} />
+                          </button>
+                          <button
+                            onClick={() => shareOnSocial("twitter")}
+                            className="p-2.5 rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors"
+                            title="Share on Twitter"
+                          >
+                            <Twitter size={16} />
+                          </button>
+                          <button
+                            onClick={() => shareOnSocial("linkedin")}
+                            className="p-2.5 rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors"
+                            title="Share on LinkedIn"
+                          >
+                            <Linkedin size={16} />
+                          </button>
+                          <button
+                            onClick={handleShare}
+                            className={`p-2.5 rounded-lg transition-colors ${
+                              isDark
+                                ? "bg-slate-700 text-gray-300 hover:bg-slate-600"
+                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            }`}
+                            title="Copy link"
+                          >
+                            {copied ? <Check size={16} /> : <Copy size={16} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comments Section */}
+                  <div ref={commentSectionRef} className="mt-12">
+                    <h3
+                      className={`text-2xl font-bold mb-6 ${
+                        isDark ? "text-gray-100" : "text-gray-900"
+                      }`}
+                    >
+                      Comments ({comments.length})
+                    </h3>
+
+                    <div
+                      className={`mb-6 p-4 rounded-xl ${
+                        isDark
+                          ? "bg-slate-900/60 border border-slate-700"
+                          : "bg-gray-50 border border-gray-200"
+                      }`}
+                    >
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Add your comment..."
+                        rows={3}
+                        className={`w-full px-4 py-3 rounded-lg border transition-colors resize-none ${
+                          isDark
+                            ? "bg-slate-950 border-slate-700 text-gray-100 placeholder-gray-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                            : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                        }`}
+                      />
+                      <div className="flex justify-end mt-3">
+                        <button
+                          onClick={handleAddComment}
+                          className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all font-medium"
+                        >
+                          Post Comment
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {comments.map((comment, index) => (
+                        <div
+                          key={index}
+                          className={`p-5 rounded-xl ${
+                            isDark
+                              ? "bg-slate-900/60 border border-slate-700"
+                              : "bg-gray-50 border border-gray-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <div
+                              className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                                isDark
+                                  ? "bg-purple-900/60 text-purple-300"
+                                  : "bg-purple-100 text-purple-700"
                               }`}
                             >
-                              <Tag size={10} />
-                              {tag}
+                              <User size={16} />
+                            </div>
+                            <span
+                              className={
+                                isDark
+                                  ? "text-gray-300 font-medium"
+                                  : "text-gray-800 font-medium"
+                              }
+                            >
+                              Anonymous User
                             </span>
-                          ))}
+                          </div>
+                          <p
+                            className={
+                              isDark
+                                ? "text-gray-200 leading-relaxed"
+                                : "text-gray-800 leading-relaxed"
+                            }
+                          >
+                            {comment}
+                          </p>
+                        </div>
+                      ))}
+
+                      {comments.length === 0 && (
+                        <div
+                          className={`text-center py-10 rounded-xl ${
+                            isDark
+                              ? "bg-slate-900/40 border border-dashed border-slate-700"
+                              : "bg-gray-50 border border-dashed border-gray-300"
+                          }`}
+                        >
+                          <MessageCircle
+                            className={`mx-auto mb-3 ${
+                              isDark ? "text-gray-500" : "text-gray-400"
+                            }`}
+                            size={36}
+                          />
+                          <p
+                            className={
+                              isDark ? "text-gray-400" : "text-gray-500"
+                            }
+                          >
+                            No comments yet. Be the first to comment!
+                          </p>
                         </div>
                       )}
                     </div>
-
-                    {/* Blog Content with Markdown */}
-                    <div className="mb-10">
-                      <div className="markdown-content">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            code: CodeBlock,
-                            h1: ({ children }) => (
-                              <h1
-                                className={`text-3xl font-bold mt-8 mb-4 pb-2 border-b ${
-                                  theme === "dark"
-                                    ? "text-purple-300 border-purple-500/30"
-                                    : "text-purple-700 border-purple-300"
-                                }`}
-                              >
-                                {children}
-                              </h1>
-                            ),
-                            h2: ({ children }) => (
-                              <h2
-                                className={`text-2xl font-bold mt-6 mb-3 ${
-                                  theme === "dark"
-                                    ? "text-purple-300"
-                                    : "text-purple-600"
-                                }`}
-                              >
-                                {children}
-                              </h2>
-                            ),
-                            h3: ({ children }) => (
-                              <h3
-                                className={`text-xl font-bold mt-5 mb-2 ${
-                                  theme === "dark"
-                                    ? "text-purple-200"
-                                    : "text-purple-500"
-                                }`}
-                              >
-                                {children}
-                              </h3>
-                            ),
-                            p: ({ children }) => (
-                              <p
-                                className={`mb-4 leading-relaxed ${
-                                  theme === "dark"
-                                    ? "text-gray-300"
-                                    : "text-gray-700"
-                                }`}
-                              >
-                                {children}
-                              </p>
-                            ),
-                            strong: ({ children }) => (
-                              <strong
-                                className={`font-bold ${
-                                  theme === "dark"
-                                    ? "text-white"
-                                    : "text-gray-900"
-                                }`}
-                              >
-                                {children}
-                              </strong>
-                            ),
-                            em: ({ children }) => (
-                              <em
-                                className={`italic ${
-                                  theme === "dark"
-                                    ? "text-gray-300"
-                                    : "text-gray-700"
-                                }`}
-                              >
-                                {children}
-                              </em>
-                            ),
-                            ul: ({ children }) => (
-                              <ul
-                                className={`list-disc pl-5 space-y-2 my-4 ${
-                                  theme === "dark"
-                                    ? "text-gray-300"
-                                    : "text-gray-700"
-                                }`}
-                              >
-                                {children}
-                              </ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol
-                                className={`list-decimal pl-5 space-y-2 my-4 ${
-                                  theme === "dark"
-                                    ? "text-gray-300"
-                                    : "text-gray-700"
-                                }`}
-                              >
-                                {children}
-                              </ol>
-                            ),
-                            blockquote: ({ children }) => (
-                              <blockquote
-                                className={`border-l-4 pl-4 py-2 my-4 italic ${
-                                  theme === "dark"
-                                    ? "border-purple-400 bg-purple-900/20 text-purple-200"
-                                    : "border-purple-500 bg-purple-50 text-purple-800"
-                                }`}
-                              >
-                                {children}
-                              </blockquote>
-                            ),
-                            a: ({ href, children }) => (
-                              <a
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-purple-600 dark:text-purple-400 hover:underline"
-                              >
-                                {children}
-                              </a>
-                            ),
-                          }}
-                        >
-                          {blog.content}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div
-                      className={`pt-8 border-t ${
-                        theme === "dark" ? "border-gray-800" : "border-gray-200"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex flex-wrap gap-3">
-                          <button
-                            onClick={handleLike}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                              isLiked
-                                ? "bg-red-500 text-white hover:bg-red-600"
-                                : theme === "dark"
-                                ? "bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                            }`}
-                          >
-                            <Heart
-                              size={18}
-                              fill={isLiked ? "currentColor" : "none"}
-                            />
-                            Like ({likeCount})
-                          </button>
-
-                          <button
-                            onClick={handleSave}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                              isSaved
-                                ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                                : theme === "dark"
-                                ? "bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                            }`}
-                          >
-                            <Bookmark
-                              size={18}
-                              fill={isSaved ? "currentColor" : "none"}
-                            />
-                            {isSaved ? "Saved" : "Save"}
-                          </button>
-
-                          <button
-                            onClick={scrollToComments}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                              theme === "dark"
-                                ? "bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                            }`}
-                          >
-                            <MessageCircle size={18} />
-                            Comment
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-sm ${
-                              theme === "dark"
-                                ? "text-gray-400"
-                                : "text-gray-600"
-                            }`}
-                          >
-                            Share:
-                          </span>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => shareOnSocial("facebook")}
-                              className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                              title="Share on Facebook"
-                            >
-                              <Facebook size={16} />
-                            </button>
-                            <button
-                              onClick={() => shareOnSocial("twitter")}
-                              className="p-2 rounded-lg bg-sky-500 text-white hover:bg-sky-600 transition-colors"
-                              title="Share on Twitter"
-                            >
-                              <Twitter size={16} />
-                            </button>
-                            <button
-                              onClick={() => shareOnSocial("linkedin")}
-                              className="p-2 rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors"
-                              title="Share on LinkedIn"
-                            >
-                              <Linkedin size={16} />
-                            </button>
-                            <button
-                              onClick={handleShare}
-                              className={`p-2 rounded-lg transition-colors ${
-                                theme === "dark"
-                                  ? "bg-slate-700 text-gray-300 hover:bg-slate-600"
-                                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                              }`}
-                              title="Copy link"
-                            >
-                              {copied ? (
-                                <Check size={16} />
-                              ) : (
-                                <Copy size={16} />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Comments Section */}
-                    <div ref={commentSectionRef} className="mt-12">
-                      <h3
-                        className={`text-2xl font-bold mb-6 ${
-                          theme === "dark" ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        Comments ({comments.length})
-                      </h3>
-
-                      {/* Add Comment */}
-                      <div
-                        className={`mb-6 p-4 rounded-xl ${
-                          theme === "dark"
-                            ? "bg-slate-800/50 border border-slate-700"
-                            : "bg-gray-50 border border-gray-200"
-                        }`}
-                      >
-                        <textarea
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          placeholder="Add your comment..."
-                          rows={3}
-                          className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-                            theme === "dark"
-                              ? "bg-slate-900 border-slate-700 text-white placeholder-gray-500 focus:border-purple-500"
-                              : "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-purple-500"
-                          }`}
-                        />
-                        <div className="flex justify-end mt-3">
-                          <button
-                            onClick={handleAddComment}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all font-medium"
-                          >
-                            Post Comment
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Comments List */}
-                      <div className="space-y-4">
-                        {comments.map((comment, index) => (
-                          <div
-                            key={index}
-                            className={`p-4 rounded-xl ${
-                              theme === "dark"
-                                ? "bg-slate-800/50 border border-slate-700"
-                                : "bg-gray-50 border border-gray-200"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 mb-2">
-                              <div
-                                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                  theme === "dark"
-                                    ? "bg-purple-500/20 text-purple-300"
-                                    : "bg-purple-100 text-purple-600"
-                                }`}
-                              >
-                                <User size={14} />
-                              </div>
-                              <span
-                                className={
-                                  theme === "dark"
-                                    ? "text-gray-300"
-                                    : "text-gray-700"
-                                }
-                              >
-                                Anonymous User
-                              </span>
-                            </div>
-                            <p
-                              className={
-                                theme === "dark"
-                                  ? "text-gray-300"
-                                  : "text-gray-700"
-                              }
-                            >
-                              {comment}
-                            </p>
-                          </div>
-                        ))}
-
-                        {comments.length === 0 && (
-                          <div
-                            className={`text-center py-8 rounded-xl ${
-                              theme === "dark"
-                                ? "bg-slate-800/30 border border-dashed border-slate-700"
-                                : "bg-gray-50 border border-dashed border-gray-300"
-                            }`}
-                          >
-                            <MessageCircle
-                              className={`mx-auto mb-3 ${
-                                theme === "dark"
-                                  ? "text-gray-600"
-                                  : "text-gray-400"
-                              }`}
-                              size={32}
-                            />
-                            <p
-                              className={
-                                theme === "dark"
-                                  ? "text-gray-400"
-                                  : "text-gray-500"
-                              }
-                            >
-                              No comments yet. Be the first to comment!
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
-                </div>
-
-                {/* Navigation */}
-                <div
-                  className={`mt-8 flex justify-between items-center p-4 rounded-xl ${
-                    theme === "dark"
-                      ? "bg-slate-800/50 border border-slate-700"
-                      : "bg-gray-50 border border-gray-200"
-                  }`}
-                >
-                  {previousBlog ? (
-                    <Link
-                      href={`/blogs/${previousBlog.id}`}
-                      className="group flex-1 max-w-xs"
-                    >
-                      <div
-                        className={`p-4 rounded-lg transition-all group-hover:scale-[1.02] ${
-                          theme === "dark"
-                            ? "bg-slate-800 hover:bg-slate-700"
-                            : "bg-white hover:bg-gray-100 border border-gray-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400 mb-2">
-                          <ChevronLeft size={16} />
-                          Previous Post
-                        </div>
-                        <p
-                          className={`font-medium line-clamp-2 ${
-                            theme === "dark" ? "text-gray-300" : "text-gray-900"
-                          }`}
-                        >
-                          {previousBlog.title}
-                        </p>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="flex-1"></div>
-                  )}
-
-                  <div className="px-4 text-center">
-                    <span
-                      className={`text-sm ${
-                        theme === "dark" ? "text-gray-500" : "text-gray-600"
-                      }`}
-                    >
-                      {getCurrentBlogIndex() + 1} of {blogs.length}
-                    </span>
-                  </div>
-
-                  {nextBlog ? (
-                    <Link
-                      href={`/blogs/${nextBlog.id}`}
-                      className="group flex-1 max-w-xs text-right"
-                    >
-                      <div
-                        className={`p-4 rounded-lg transition-all group-hover:scale-[1.02] ${
-                          theme === "dark"
-                            ? "bg-slate-800 hover:bg-slate-700"
-                            : "bg-white hover:bg-gray-100 border border-gray-200"
-                        }`}
-                      >
-                        <div className="flex items-center justify-end gap-2 text-sm text-purple-600 dark:text-purple-400 mb-2">
-                          Next Post
-                          <ChevronRight size={16} />
-                        </div>
-                        <p
-                          className={`font-medium line-clamp-2 ${
-                            theme === "dark" ? "text-gray-300" : "text-gray-900"
-                          }`}
-                        >
-                          {nextBlog.title}
-                        </p>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="flex-1"></div>
-                  )}
                 </div>
               </div>
 
-              {/* Sidebar - 1/3 width */}
-              <div className="lg:w-1/3">
-                {/* Related Posts */}
+              {/* Navigation - Previous & Next */}
+              <div
+                className={`mt-8 flex justify-between items-center p-5 rounded-xl ${
+                  isDark
+                    ? "bg-slate-900/50 border border-slate-700"
+                    : "bg-gray-50 border border-gray-200"
+                }`}
+              >
+                {getPreviousBlog() ? (
+                  <Link
+                    href={`/blogs/${getPreviousBlog()?.id}`}
+                    className="group flex-1 max-w-xs"
+                  >
+                    <div
+                      className={`p-4 rounded-lg transition-all group-hover:scale-[1.02] ${
+                        isDark
+                          ? "bg-slate-800/80 hover:bg-slate-700"
+                          : "bg-white hover:bg-gray-100 border border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 text-sm text-purple-400 mb-2">
+                        <ChevronLeft size={16} />
+                        Previous Post
+                      </div>
+                      <p
+                        className={`font-medium line-clamp-2 ${
+                          isDark ? "text-gray-200" : "text-gray-900"
+                        }`}
+                      >
+                        {getPreviousBlog()?.title}
+                      </p>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex-1" />
+                )}
+
+                <div className="px-6 text-center">
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>
+                    {getCurrentBlogIndex() + 1} of {blogs.length}
+                  </span>
+                </div>
+
+                {getNextBlog() ? (
+                  <Link
+                    href={`/blogs/${getNextBlog()?.id}`}
+                    className="group flex-1 max-w-xs text-right"
+                  >
+                    <div
+                      className={`p-4 rounded-lg transition-all group-hover:scale-[1.02] ${
+                        isDark
+                          ? "bg-slate-800/80 hover:bg-slate-700"
+                          : "bg-white hover:bg-gray-100 border border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-end gap-2 text-sm text-purple-400 mb-2">
+                        Next Post
+                        <ChevronRight size={16} />
+                      </div>
+                      <p
+                        className={`font-medium line-clamp-2 ${
+                          isDark ? "text-gray-200" : "text-gray-900"
+                        }`}
+                      >
+                        {getNextBlog()?.title}
+                      </p>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex-1" />
+                )}
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:w-1/3">
+              <div
+                className={`sticky top-24 rounded-2xl border backdrop-blur-md overflow-hidden ${
+                  isDark
+                    ? "bg-slate-900/50 border-purple-600/30"
+                    : "bg-white/80 border-purple-200"
+                }`}
+              >
+                <div className="p-6 border-b">
+                  <h3
+                    className={`text-xl font-bold flex items-center gap-2 ${
+                      isDark ? "text-gray-100" : "text-gray-900"
+                    }`}
+                  >
+                    <Sparkles size={20} className="text-purple-400" />
+                    Related Posts
+                  </h3>
+                </div>
+
+                <div className="p-5 space-y-4">
+                  {getRelatedBlogs().length > 0 ? (
+                    getRelatedBlogs().map((relatedBlog) => (
+                      <Link
+                        key={relatedBlog.id}
+                        href={`/blogs/${relatedBlog.id}`}
+                        className={`block p-4 rounded-xl transition-all hover:scale-[1.02] ${
+                          isDark
+                            ? "hover:bg-slate-800/60 border border-slate-700"
+                            : "hover:bg-gray-100 border border-gray-200"
+                        }`}
+                      >
+                        <h4
+                          className={`font-semibold mb-2 line-clamp-2 ${
+                            isDark ? "text-gray-200" : "text-gray-900"
+                          }`}
+                        >
+                          {relatedBlog.title}
+                        </h4>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span
+                            className={
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }
+                          >
+                            {new Date(
+                              relatedBlog.createdAt
+                            ).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye size={12} className="text-purple-400" />
+                            <span
+                              className={
+                                isDark ? "text-gray-400" : "text-gray-600"
+                              }
+                            >
+                              {relatedBlog.views || 0}
+                            </span>
+                          </span>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div
+                      className={`text-center py-8 rounded-xl ${
+                        isDark
+                          ? "bg-slate-900/40 border border-dashed border-slate-700"
+                          : "bg-gray-50 border border-dashed border-gray-300"
+                      }`}
+                    >
+                      <Sparkles
+                        className={`mx-auto mb-3 ${
+                          isDark ? "text-gray-500" : "text-gray-400"
+                        }`}
+                        size={28}
+                      />
+                      <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+                        No related posts found
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5 border-t">
+                  <Link
+                    href="/blogs"
+                    className={`block w-full text-center py-3 rounded-lg font-medium transition-all ${
+                      isDark
+                        ? "bg-purple-900/50 text-purple-200 hover:bg-purple-800/60 border border-purple-700/40"
+                        : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-300"
+                    }`}
+                  >
+                    View All Posts
+                  </Link>
+                </div>
+              </div>
+
+              {/* Popular Tags */}
+              {blog.tags?.length > 0 && (
                 <div
-                  className={`sticky top-24 rounded-2xl border backdrop-blur-md overflow-hidden ${
-                    theme === "dark"
-                      ? "bg-slate-800/50 backdrop-blur-md border-purple-500/20"
-                      : "bg-white/80 backdrop-blur-md border-purple-200"
+                  className={`mt-8 rounded-2xl border backdrop-blur-md overflow-hidden ${
+                    isDark
+                      ? "bg-slate-900/50 border-purple-600/30"
+                      : "bg-white/80 border-purple-200"
                   }`}
                 >
                   <div className="p-6 border-b">
                     <h3
                       className={`text-xl font-bold flex items-center gap-2 ${
-                        theme === "dark" ? "text-white" : "text-gray-900"
+                        isDark ? "text-gray-100" : "text-gray-900"
                       }`}
                     >
-                      <Sparkles size={20} className="text-purple-500" />
-                      Related Posts
+                      <Tag size={20} className="text-purple-400" />
+                      Popular Tags
                     </h3>
                   </div>
 
-                  <div className="p-4 space-y-3">
-                    {relatedBlogs.length > 0 ? (
-                      relatedBlogs.map((relatedBlog) => (
-                        <Link
-                          key={relatedBlog.id}
-                          href={`/blogs/${relatedBlog.id}`}
-                          className={`block p-4 rounded-xl transition-all hover:scale-[1.02] ${
-                            theme === "dark"
-                              ? "hover:bg-slate-700/50 border border-slate-700"
-                              : "hover:bg-gray-100 border border-gray-200"
+                  <div className="p-6">
+                    <div className="flex flex-wrap gap-2">
+                      {blog.tags.map((tag, i) => (
+                        <span
+                          key={i}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg font-medium ${
+                            isDark
+                              ? "bg-purple-900/50 text-purple-200 border border-purple-700/40"
+                              : "bg-purple-100 text-purple-800 border border-purple-200"
                           }`}
                         >
-                          <h4
-                            className={`font-semibold mb-2 line-clamp-2 ${
-                              theme === "dark"
-                                ? "text-gray-300"
-                                : "text-gray-900"
-                            }`}
-                          >
-                            {relatedBlog.title}
-                          </h4>
-                          <div className="flex items-center gap-3 text-sm">
-                            <span
-                              className={
-                                theme === "dark"
-                                  ? "text-gray-500"
-                                  : "text-gray-600"
-                              }
-                            >
-                              {new Date(
-                                relatedBlog.createdAt
-                              ).toLocaleDateString()}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Eye size={12} className="text-purple-500" />
-                              <span
-                                className={
-                                  theme === "dark"
-                                    ? "text-gray-500"
-                                    : "text-gray-600"
-                                }
-                              >
-                                {relatedBlog.views || 0}
-                              </span>
-                            </span>
-                          </div>
-                        </Link>
-                      ))
-                    ) : (
-                      <div
-                        className={`text-center py-6 rounded-xl ${
-                          theme === "dark"
-                            ? "bg-slate-800/30 border border-dashed border-slate-700"
-                            : "bg-gray-50 border border-dashed border-gray-300"
-                        }`}
-                      >
-                        <Sparkles
-                          className={`mx-auto mb-2 ${
-                            theme === "dark" ? "text-gray-600" : "text-gray-400"
-                          }`}
-                          size={24}
-                        />
-                        <p
-                          className={
-                            theme === "dark" ? "text-gray-400" : "text-gray-500"
-                          }
-                        >
-                          No related posts found
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* View All Button */}
-                  <div className="p-4 border-t">
-                    <Link
-                      href="/blogs"
-                      className={`block w-full text-center py-3 rounded-lg font-medium transition-all ${
-                        theme === "dark"
-                          ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/30"
-                          : "bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300"
-                      }`}
-                    >
-                      View All Posts
-                    </Link>
+                          <Tag size={12} />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-
-                {/* Popular Tags */}
-                {blog.tags && blog.tags.length > 0 && (
-                  <div
-                    className={`mt-6 rounded-2xl border backdrop-blur-md overflow-hidden ${
-                      theme === "dark"
-                        ? "bg-slate-800/50 backdrop-blur-md border-purple-500/20"
-                        : "bg-white/80 backdrop-blur-md border-purple-200"
-                    }`}
-                  >
-                    <div className="p-6 border-b">
-                      <h3
-                        className={`text-xl font-bold flex items-center gap-2 ${
-                          theme === "dark" ? "text-white" : "text-gray-900"
-                        }`}
-                      >
-                        <Tag size={20} className="text-purple-500" />
-                        Popular Tags
-                      </h3>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="flex flex-wrap gap-2">
-                        {blog.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg font-medium ${
-                              theme === "dark"
-                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                                : "bg-purple-100 text-purple-700 border border-purple-200"
-                            }`}
-                          >
-                            <Tag size={12} />
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes pulse {
-            0%,
-            100% {
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.7;
-            }
-          }
-          @keyframes pulse-slow {
-            0%,
-            100% {
-              opacity: 0.3;
-            }
-            50% {
-              opacity: 0.5;
-            }
-          }
-          .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-          }
-          .animation-delay-2000 {
-            animation-delay: 2s;
-          }
-          .animation-delay-4000 {
-            animation-delay: 4s;
-          }
-
-          .line-clamp-2 {
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-          }
-
-          .markdown-content {
-            line-height: 1.8;
-          }
-
-          .markdown-content h1,
-          .markdown-content h2,
-          .markdown-content h3 {
-            position: relative;
-          }
-
-          .markdown-content h1:before {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -2px;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--tw-gradient-stops));
-            --tw-gradient-from: #9333ea;
-            --tw-gradient-to: #db2777;
-          }
-        `}</style>
       </div>
-      <Footer></Footer>
+
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/dashboard/blogs/edit/[id]/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,28 +11,18 @@ import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import {
   ArrowLeft,
-  Sparkles,
   Globe,
   Eye,
   Save,
-  Upload,
-  Tag,
+  EyeOff,
+  RefreshCw,
   Bold,
   Italic,
   Heading,
-  List,
-  Link as LinkIcon,
-  Image,
-  Code,
-  Quote,
-  Type,
-  Palette,
-  AlignLeft,
-  EyeOff,
-  RefreshCw,
+  Link,
 } from "lucide-react";
+import { BlogCategory } from "@/types";
 
-// Dynamic import for MDEditor to avoid SSR issues
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
 const generateSlug = (title: string) => {
@@ -50,809 +39,410 @@ export default function EditBlogPage() {
   const params = useParams();
   const { data: session } = useSession();
   const { theme } = useTheme();
+  const blogId = params.id as string;
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
-  const [isSlugManual, setIsSlugManual] = useState(false);
+  const [language, setLanguage] = useState<"en" | "bn">("en");
+  const [isSlugManual, setIsSlugManual] = useState(true); // এডিটের সময় স্লাগ ম্যানুয়াল রাখাই ভালো
+
   const [formData, setFormData] = useState({
     title: "",
+    titleBn: "",
     slug: "",
     content: "",
+    contentBn: "",
     excerpt: "",
+    excerptBn: "",
     tags: [] as string[],
+    category: "JAVASCRIPT" as BlogCategory,
     published: false,
     thumbnail: "",
   });
 
-  const blogId = params.id as string;
-
+  // ডাটা ফেচ করা
   useEffect(() => {
-    fetchBlog();
-  }, [blogId]);
+    const fetchBlog = async () => {
+      try {
+        setLoading(true);
+        const response = await blogAPI.getById(blogId);
+        const data = response.data.data || response.data;
 
+        setFormData({
+          title: data.title || "",
+          titleBn: data.titleBn || "",
+          slug: data.slug || "",
+          content: data.content || "",
+          contentBn: data.contentBn || "",
+          excerpt: data.excerpt || "",
+          excerptBn: data.excerptBn || "",
+          tags: data.tags || [],
+          category: data.category || "JAVASCRIPT",
+          published: data.published || false,
+          thumbnail: data.thumbnail || "",
+        });
+      } catch (error) {
+        toast.error("Failed to load blog");
+        router.push("/dashboard/blogs");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (blogId) fetchBlog();
+  }, [blogId, router]);
+
+  // অটো-স্লাগ (যদি টাইটেল চেঞ্জ করিস এবং অটো মোড অন থাকে)
   useEffect(() => {
     if (formData.title && !isSlugManual) {
-      const generatedSlug = generateSlug(formData.title);
       setFormData((prev) => ({
         ...prev,
-        slug: generatedSlug,
+        slug: generateSlug(formData.title),
       }));
     }
   }, [formData.title, isSlugManual]);
 
-  const fetchBlog = async () => {
-    try {
-      setLoading(true);
-      const response = await blogAPI.getById(blogId);
-      const blogData = response.data.data || response.data;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-      setFormData({
-        title: blogData.title || "",
-        slug: blogData.slug || "",
-        content: blogData.content || "",
-        excerpt: blogData.excerpt || "",
-        tags: blogData.tags || [],
-        published: blogData.published || false,
-        thumbnail: blogData.thumbnail || "",
-      });
-    } catch (error: any) {
-      console.error("Error fetching blog:", error);
-      toast.error("Failed to load blog data");
-      router.push("/dashboard/blogs");
-    } finally {
-      setLoading(false);
+  const insertMarkdown = (shortcut: string) => {
+    const fieldName = language === "en" ? "content" : "contentBn";
+    const currentContent = formData[fieldName];
+    const textarea = document.querySelector(
+      "#content-editor textarea"
+    ) as HTMLTextAreaElement;
+
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const before = currentContent.substring(0, start);
+      const after = currentContent.substring(end);
+      const newText = before + shortcut + after;
+
+      setFormData((prev) => ({ ...prev, [fieldName]: newText }));
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(
+          start + shortcut.length,
+          start + shortcut.length
+        );
+      }, 0);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     try {
       if (!formData.title || !formData.slug || !formData.content) {
-        toast.error("Please fill in all required fields");
-        return;
+        return toast.error("English Title, Slug and Content are required");
       }
 
-      const blogData = {
+      await blogAPI.update(blogId, {
         ...formData,
         authorId: session?.user?.id,
-      };
+      });
 
-      const response = await blogAPI.update(blogId, blogData);
-
-      if (response.data.success) {
-        toast.success("Blog updated successfully!");
-        router.push("/dashboard/blogs");
-      } else {
-        toast.error(response.data.message || "Failed to update blog");
-      }
+      toast.success("Blog updated successfully!");
+      router.push("/dashboard/blogs");
+      router.refresh();
     } catch (error: any) {
-      console.error("Error updating blog:", error);
-
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error("Failed to update blog. Please try again.");
-      }
+      toast.error(error.response?.data?.message || "Update failed");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleContentChange = (value: string | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      content: value || "",
-    }));
-  };
-
-  const handleTagsChange = (tags: string[]) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags,
-    }));
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const slug = generateSlug(e.target.value);
-    setFormData((prev) => ({
-      ...prev,
-      slug,
-    }));
-
-    if (!isSlugManual) {
-      setIsSlugManual(true);
-    }
-  };
-
-  const handleSlugFocus = () => {
-    setIsSlugManual(true);
-  };
-
-  const resetSlugToAuto = () => {
-    setIsSlugManual(false);
-    const generatedSlug = generateSlug(formData.title);
-    setFormData((prev) => ({
-      ...prev,
-      slug: generatedSlug,
-    }));
-  };
-
-  const markdownShortcuts = [
-    {
-      name: "Heading 1",
-      shortcut: "# ",
-      description: "Add a main heading",
-      icon: <Heading size={16} />,
-    },
-    {
-      name: "Heading 2",
-      shortcut: "## ",
-      description: "Add a subheading",
-      icon: <Heading size={16} />,
-    },
-    {
-      name: "Bold",
-      shortcut: "**text**",
-      description: "Make text bold",
-      icon: <Bold size={16} />,
-    },
-    {
-      name: "Italic",
-      shortcut: "*text*",
-      description: "Make text italic",
-      icon: <Italic size={16} />,
-    },
-    {
-      name: "Link",
-      shortcut: "[text](url)",
-      description: "Add a hyperlink",
-      icon: <LinkIcon size={16} />,
-    },
-    {
-      name: "Image",
-      shortcut: "![alt](url)",
-      description: "Insert an image",
-      icon: <Image size={16} />,
-    },
-    {
-      name: "List",
-      shortcut: "- item",
-      description: "Create a bullet list",
-      icon: <List size={16} />,
-    },
-    {
-      name: "Code",
-      shortcut: "`code`",
-      description: "Inline code",
-      icon: <Code size={16} />,
-    },
-    {
-      name: "Blockquote",
-      shortcut: "> text",
-      description: "Add a quote",
-      icon: <Quote size={16} />,
-    },
-  ];
-
-  const insertMarkdown = (shortcut: string) => {
-    const textarea = document.querySelector("#content-editor textarea");
-    if (textarea) {
-      const start = (textarea as HTMLTextAreaElement).selectionStart;
-      const end = (textarea as HTMLTextAreaElement).selectionEnd;
-      const text = (textarea as HTMLTextAreaElement).value;
-      const before = text.substring(0, start);
-      const after = text.substring(end);
-
-      let newText = "";
-      if (shortcut.includes("text")) {
-        newText = before + shortcut + after;
-      } else {
-        newText = before + shortcut + (after || "your text");
-      }
-
-      handleContentChange(newText);
-      setTimeout(() => {
-        (textarea as HTMLTextAreaElement).focus();
-        const newCursorPos = start + shortcut.length;
-        (textarea as HTMLTextAreaElement).setSelectionRange(
-          newCursorPos,
-          newCursorPos
-        );
-      }, 0);
-    }
-  };
-
-  if (loading) {
+  if (loading)
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${
-          theme === "dark"
-            ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
-            : "bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50"
-        }`}
-      >
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <div className="h-screen flex items-center justify-center">
+        <RefreshCw className="animate-spin text-purple-600" />
       </div>
     );
-  }
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${
+      className={`min-h-screen p-4 ${
         theme === "dark"
-          ? "bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 text-white"
-          : "bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50 text-gray-900"
+          ? "bg-slate-900 text-white"
+          : "bg-slate-50 text-gray-900"
       }`}
     >
-      {/* Animated Background */}
-      <div className="fixed inset-0 opacity-30">
-        <div
-          className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-pulse ${
-            theme === "dark" ? "bg-purple-500/20" : "bg-purple-200"
-          }`}
-        />
-        <div
-          className={`absolute top-1/3 right-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-2000 ${
-            theme === "dark" ? "bg-pink-500/20" : "bg-pink-200"
-          }`}
-        />
-      </div>
-
-      <div className="relative z-10 space-y-8 p-4 max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div
-                className={`p-3 rounded-2xl ${
-                  theme === "dark"
-                    ? "bg-slate-800/50 backdrop-blur-md border border-purple-500/20"
-                    : "bg-white/80 backdrop-blur-md border border-purple-200"
-                }`}
-              >
-                <Sparkles
-                  className="text-purple-600 dark:text-purple-400"
-                  size={24}
-                />
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Edit Blog
-                </h1>
-                <p
-                  className={`text-sm mt-1 ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  Update your blog post with rich formatting
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => router.back()}
-              className={`group flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                theme === "dark"
-                  ? "bg-slate-800/50 hover:bg-slate-700/50 text-gray-300"
-                  : "bg-white/80 hover:bg-gray-100 text-gray-700"
-              }`}
-            >
-              <ArrowLeft size={18} />
-              Back to Blogs
-            </button>
-            <button
-              onClick={fetchBlog}
-              className={`group flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                theme === "dark"
-                  ? "bg-slate-800/50 hover:bg-slate-700/50 text-gray-300"
-                  : "bg-white/80 hover:bg-gray-100 text-gray-700"
-              }`}
-            >
-              <RefreshCw size={18} />
-              Reload
-            </button>
-          </div>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Edit Blog Post</h1>
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 opacity-70 hover:opacity-100"
+          >
+            <ArrowLeft size={18} /> Back
+          </button>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className={`rounded-2xl border backdrop-blur-md p-6 space-y-6 ${
+          className={`p-6 rounded-2xl border ${
             theme === "dark"
-              ? "bg-slate-800/50 border-purple-500/20"
-              : "bg-white/80 border-purple-200"
+              ? "bg-slate-800 border-slate-700"
+              : "bg-white border-slate-200 shadow-sm"
           }`}
         >
-          {/* Title */}
-          <div>
-            <label
-              htmlFor="title"
-              className={`block text-sm font-medium mb-3 ${
-                theme === "dark" ? "text-gray-200" : "text-gray-700"
-              }`}
-            >
-              Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              required
-              value={formData.title}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                theme === "dark"
-                  ? "bg-slate-900/50 border border-purple-500/30 text-white placeholder-gray-400"
-                  : "bg-white/50 border border-purple-300 text-gray-900 placeholder-gray-500"
-              }`}
-              placeholder="Enter blog title"
-            />
-          </div>
-
-          {/* Slug */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <label
-                htmlFor="slug"
-                className={`block text-sm font-medium ${
-                  theme === "dark" ? "text-gray-200" : "text-gray-700"
+          {/* Language Switcher */}
+          <div className="flex gap-2 p-1 border-2 border-slate-100 dark:border-slate-700 w-fit rounded-lg mb-6">
+            {["en", "bn"].map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setLanguage(lang as any)}
+                className={`px-4 py-2 rounded-md text-sm transition ${
+                  language === lang
+                    ? "bg-white dark:bg-slate-600 shadow-sm font-bold text-black dark:text-white"
+                    : "opacity-50"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <Globe size={16} />
-                  Slug *
-                </div>
+                {lang === "en" ? "English" : "বাংলা"}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-6">
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {language === "en"
+                  ? "English Title *"
+                  : "বাংলা টাইটেল (ঐচ্ছিক)"}
               </label>
-              {isSlugManual && (
-                <button
-                  type="button"
-                  onClick={resetSlugToAuto}
-                  className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium"
-                >
-                  Reset to auto-generate
-                </button>
-              )}
+              <input
+                type="text"
+                name={language === "en" ? "title" : "titleBn"}
+                value={language === "en" ? formData.title : formData.titleBn}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-purple-500 outline-none dark:bg-slate-900 dark:border-slate-700"
+              />
             </div>
-            <input
-              type="text"
-              id="slug"
-              name="slug"
-              required
-              value={formData.slug}
-              onChange={handleSlugChange}
-              onFocus={handleSlugFocus}
-              className={`w-full px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                theme === "dark"
-                  ? "bg-slate-900/50 border border-purple-500/30 text-white placeholder-gray-400"
-                  : "bg-white/50 border border-purple-300 text-gray-900 placeholder-gray-500"
-              }`}
-              placeholder="URL-friendly slug"
-            />
-            <p
-              className={`mt-2 text-sm ${
-                theme === "dark" ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
-              URL:{" "}
-              <span className="text-purple-600 dark:text-purple-400">
-                /blogs/{formData.slug || "your-slug"}
-              </span>
-            </p>
-          </div>
 
-          {/* Excerpt */}
-          <div>
-            <label
-              htmlFor="excerpt"
-              className={`block text-sm font-medium mb-3 ${
-                theme === "dark" ? "text-gray-200" : "text-gray-700"
-              }`}
-            >
-              Excerpt
-            </label>
-            <textarea
-              id="excerpt"
-              name="excerpt"
-              rows={3}
-              value={formData.excerpt}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                theme === "dark"
-                  ? "bg-slate-900/50 border border-purple-500/30 text-white placeholder-gray-400"
-                  : "bg-white/50 border border-purple-300 text-gray-900 placeholder-gray-500"
-              }`}
-              placeholder="Brief description of your blog post"
-            />
-          </div>
+            {/* Slug */}
+            {language === "en" && (
+              <div>
+                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <Globe size={16} /> URL Slug *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => {
+                      setFormData((p) => ({
+                        ...p,
+                        slug: generateSlug(e.target.value),
+                      }));
+                      setIsSlugManual(true);
+                    }}
+                    className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700 font-mono text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsSlugManual(!isSlugManual)}
+                    className={`text-xs ${
+                      !isSlugManual
+                        ? "text-purple-500 font-bold"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {isSlugManual ? "Manual" : "Auto"}
+                  </button>
+                </div>
+              </div>
+            )}
 
-          {/* Content Editor */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <label
-                htmlFor="content"
-                className={`block text-sm font-medium ${
-                  theme === "dark" ? "text-gray-200" : "text-gray-700"
-                }`}
-              >
-                Content *
+            {/* Excerpt */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {language === "en"
+                  ? "Excerpt (SEO Summary)"
+                  : "সংক্ষিপ্ত সারমর্ম"}
               </label>
-              <div className="flex items-center gap-2">
+              <textarea
+                rows={3}
+                name={language === "en" ? "excerpt" : "excerptBn"}
+                value={
+                  language === "en" ? formData.excerpt : formData.excerptBn
+                }
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* Markdown Editor */}
+            <div id="content-editor">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium">
+                  {language === "en"
+                    ? "Content (Markdown) *"
+                    : "মূল বিষয়বস্তু (বাংলা)"}
+                </label>
                 <button
                   type="button"
                   onClick={() => setPreview(!preview)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    theme === "dark"
-                      ? "bg-slate-700/50 hover:bg-slate-600/50 text-gray-300"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  }`}
+                  className="text-xs flex items-center gap-1"
                 >
-                  {preview ? (
-                    <>
-                      <EyeOff size={14} />
-                      Edit Mode
-                    </>
-                  ) : (
-                    <>
-                      <Eye size={14} />
-                      Preview Mode
-                    </>
-                  )}
+                  {preview ? <EyeOff size={14} /> : <Eye size={14} />}{" "}
+                  {preview ? "Edit" : "Preview"}
                 </button>
               </div>
-            </div>
 
-            {/* Markdown Shortcuts */}
-            <div
-              className={`mb-4 p-4 rounded-xl ${
-                theme === "dark"
-                  ? "bg-slate-900/50 border border-slate-700"
-                  : "bg-gray-50 border border-gray-200"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Type
-                  size={16}
-                  className="text-purple-600 dark:text-purple-400"
-                />
-                <span
-                  className={`text-sm font-medium ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Quick Formatting
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                {markdownShortcuts.map((item) => (
+              {/* Toolbar */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[
+                  { i: <Bold size={14} />, s: "**bold**" },
+                  { i: <Italic size={14} />, s: "*italic*" },
+                  { i: <Heading size={14} />, s: "## " },
+                  { i: <Link size={14} />, s: "[](url)" },
+                ].map((btn, idx) => (
                   <button
-                    key={item.name}
+                    key={idx}
                     type="button"
-                    onClick={() => insertMarkdown(item.shortcut)}
-                    className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-colors ${
-                      theme === "dark"
-                        ? "bg-slate-800 hover:bg-slate-700 text-gray-300"
-                        : "bg-white hover:bg-gray-100 text-gray-700 border border-gray-200"
-                    }`}
-                    title={`${item.name}: ${item.shortcut}`}
+                    onClick={() => insertMarkdown(btn.s)}
+                    className="p-2 border rounded hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
-                    <span
-                      className={`p-1 rounded ${
-                        theme === "dark" ? "bg-slate-700" : "bg-gray-100"
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
-                    <span className="truncate">{item.name}</span>
+                    {btn.i}
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* MD Editor */}
-            <div
-              id="content-editor"
-              className="border rounded-xl overflow-hidden"
-            >
-              {typeof window !== "undefined" && (
-                <MDEditor
-                  value={formData.content}
-                  onChange={handleContentChange}
-                  height={400}
-                  preview={preview ? "preview" : "edit"}
-                  visiableDragbar={false}
-                  className={`${theme === "dark" ? "dark" : ""}`}
-                  data-color-mode={theme === "dark" ? "dark" : "light"}
-                  textareaProps={{
-                    placeholder:
-                      "Write your blog content here using Markdown...",
-                  }}
-                  previewOptions={{
-                    components: {
-                      // এটি লিংকগুলোকে নতুন ট্যাবে ওপেন করবে এবং এরর দিবে না
-                      a: ({ node, ...props }: any) => (
-                        <a
-                          {...props}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
-                      ),
-                    },
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Markdown Guide */}
-            <div
-              className={`mt-4 p-4 rounded-xl ${
-                theme === "dark"
-                  ? "bg-slate-900/30 border border-slate-700"
-                  : "bg-purple-50 border border-purple-200"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Palette
-                  size={16}
-                  className="text-purple-600 dark:text-purple-400"
-                />
-                <span
-                  className={`text-sm font-medium ${
-                    theme === "dark" ? "text-purple-300" : "text-purple-700"
-                  }`}
-                >
-                  Markdown Cheat Sheet
-                </span>
-              </div>
               <div
-                className={`text-sm grid grid-cols-1 md:grid-cols-2 gap-2 ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                className={`w-full rounded-2xl border transition-all duration-300 ${
+                  theme === "dark"
+                    ? "bg-slate-800/80 border-purple-500/20 text-white"
+                    : "bg-white/80 border-purple-200 text-slate-900 shadow-sm"
                 }`}
+                data-color-mode={theme === "dark" ? "dark" : "light"}
               >
-                <div>
-                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
-                    # Heading 1
-                  </code>
-                  <span className="ml-2">→ Large heading</span>
-                </div>
-                <div>
-                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
-                    ## Heading 2
-                  </code>
-                  <span className="ml-2">→ Medium heading</span>
-                </div>
-                <div>
-                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
-                    **bold**
-                  </code>
-                  <span className="ml-2">→ Bold text</span>
-                </div>
-                <div>
-                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
-                    *italic*
-                  </code>
-                  <span className="ml-2">→ Italic text</span>
-                </div>
-                <div>
-                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
-                    [link](url)
-                  </code>
-                  <span className="ml-2">→ Hyperlink</span>
-                </div>
-                <div>
-                  <code className="bg-slate-800 dark:bg-slate-700 px-2 py-1 rounded text-xs">
-                    ![alt](url)
-                  </code>
-                  <span className="ml-2">→ Insert image</span>
+                <div className="p-2">
+                  {/* এডিটর */}
+                  <MDEditor
+                    value={
+                      language === "en" ? formData.content : formData.contentBn
+                    }
+                    onChange={(val) =>
+                      setFormData((p) => ({
+                        ...p,
+                        [language === "en" ? "content" : "contentBn"]:
+                          val || "",
+                      }))
+                    }
+                    preview={preview ? "preview" : "edit"}
+                    height={400}
+                    // ইনলাইন স্টাইল দিয়ে ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে তোর ডিভ-এর কালার পায়
+                    style={{ backgroundColor: "transparent" }}
+                    previewOptions={{
+                      className: "prose dark:prose-invert max-w-none",
+                    }}
+                  />
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Tags */}
-          <div>
-            <label
-              className={`block text-sm font-medium mb-3 ${
-                theme === "dark" ? "text-gray-200" : "text-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Tag size={16} />
-                Tags
+            {/* Meta Data */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      category: e.target.value as BlogCategory,
+                    }))
+                  }
+                  className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700"
+                >
+                  {[
+                    "JAVASCRIPT",
+                    "REACT",
+                    "NEXTJS",
+                    "NODEJS",
+                    "TYPESCRIPT",
+                    "DATABASE",
+                  ].map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </label>
-            <TagsInput
-              tags={formData.tags}
-              onChange={handleTagsChange}
-              placeholder="Type and press Enter, Space or Comma to add tags"
-              theme={theme}
-            />
-            <p
-              className={`mt-2 text-sm ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              Press Enter, Space or Comma to add tags. Click × to remove.
-            </p>
-          </div>
-
-          {/* Thumbnail */}
-          <div>
-            <label
-              htmlFor="thumbnail"
-              className={`block text-sm font-medium mb-3 ${
-                theme === "dark" ? "text-gray-200" : "text-gray-700"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Upload size={16} />
-                Thumbnail URL
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Thumbnail URL
+                </label>
+                <input
+                  type="text"
+                  name="thumbnail"
+                  value={formData.thumbnail}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700"
+                />
               </div>
-            </label>
-            <input
-              type="url"
-              id="thumbnail"
-              name="thumbnail"
-              value={formData.thumbnail}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                theme === "dark"
-                  ? "bg-slate-900/50 border border-purple-500/30 text-white placeholder-gray-400"
-                  : "bg-white/50 border border-purple-300 text-gray-900 placeholder-gray-500"
-              }`}
-              placeholder="https://example.com/image.jpg"
-            />
-            <p
-              className={`mt-2 text-sm ${
-                theme === "dark" ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
-              Tip: Use Unsplash for free images. Example:
-              https://images.unsplash.com/photo-...
-            </p>
-          </div>
+            </div>
 
-          {/* Publish Checkbox */}
-          <div
-            className={`flex items-center p-4 rounded-xl ${
-              theme === "dark"
-                ? "bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20"
-                : "bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200"
-            }`}
-          >
-            <div className="flex items-center h-5">
+            <div>
+              <label className="block text-sm font-medium mb-2">Tags</label>
+              <TagsInput
+                tags={formData.tags}
+                onChange={(tags) => setFormData((p) => ({ ...p, tags }))}
+                theme={theme}
+              />
+            </div>
+
+            {/* Publish Checkbox */}
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="published"
-                name="published"
                 checked={formData.published}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    published: e.target.checked,
-                  }))
+                  setFormData((p) => ({ ...p, published: e.target.checked }))
                 }
-                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 rounded"
               />
-            </div>
-            <div className="ml-3">
-              <label
-                htmlFor="published"
-                className={`text-sm font-medium ${
-                  theme === "dark" ? "text-gray-200" : "text-gray-900"
-                }`}
-              >
-                Publish immediately
+              <label htmlFor="published" className="text-sm font-medium">
+                Published
               </label>
-              <p
-                className={`text-xs mt-1 ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                If unchecked, the blog will be saved as draft
-              </p>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-6">
-            <button
-              type="submit"
-              disabled={saving || !session?.user?.id}
-              className="group relative flex-1"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl blur transition-all group-hover:blur-md opacity-70"></div>
-              <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+              >
                 {saving ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-solid rounded-full animate-spin border-t-transparent"></div>
-                    Updating...
-                  </>
+                  "Saving Changes..."
                 ) : (
                   <>
-                    <Save size={20} />
-                    {formData.published ? "Update & Publish" : "Update Draft"}
+                    <Save size={20} /> Update Blog
                   </>
                 )}
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (formData.content || formData.title) {
-                  if (
-                    confirm("Are you sure? Your unsaved changes will be lost.")
-                  ) {
-                    router.back();
-                  }
-                } else {
-                  router.back();
-                }
-              }}
-              className={`flex-1 px-6 py-4 rounded-xl font-medium transition-all duration-200 ${
-                theme === "dark"
-                  ? "bg-slate-700/50 hover:bg-slate-600/50 text-gray-300"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-              }`}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPreview(!preview)}
-              className={`sm:flex-1 px-6 py-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
-                theme === "dark"
-                  ? "bg-slate-700/50 hover:bg-slate-600/50 text-gray-300"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-              }`}
-            >
-              {preview ? (
-                <>
-                  <AlignLeft size={20} />
-                  Edit Mode
-                </>
-              ) : (
-                <>
-                  <Eye size={20} />
-                  Preview
-                </>
-              )}
-            </button>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="px-8 py-4 bg-slate-200 dark:bg-slate-700 rounded-xl font-medium"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </form>
       </div>
-
-      <style jsx>{`
-        @keyframes pulse-slow {
-          0%,
-          100% {
-            opacity: 0.3;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-        .animate-pulse {
-          animation: pulse-slow 3s ease-in-out infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-      `}</style>
     </div>
   );
 }

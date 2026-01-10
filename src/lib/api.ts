@@ -15,7 +15,12 @@ export const api = axios.create({
 });
 
 // Type definitions
-export type ProjectCategory = "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS";
+export type ProjectCategory =
+  | "FULLSTACK"
+  | "REACTTAILWINDJS"
+  | "HTMLCSSJS"
+  | "HTMLCSS"
+  | "OTHERS";
 
 export interface CreateProjectData {
   title: string;

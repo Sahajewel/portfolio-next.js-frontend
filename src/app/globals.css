@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -22,5 +23,58 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =============================================
+   MDEditor Custom Styling (Fits your Pattern)
+   ============================================= */
+
+/* ১. মেইন এডিটর কন্টেইনার ফিক্স */
+.w-md-editor {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* ২. লাইট মোড (Light Mode) ফোর্স ফিক্স */
+[data-color-mode="light"] .w-md-editor,
+[data-color-mode="light"] .wmde-markdown,
+[data-color-mode="light"] .w-md-editor-content,
+[data-color-mode="light"] .w-md-editor-toolbar {
+  background-color: transparent !important;
+  color: #0f172a !important; /* slate-900 */
+}
+
+/* লাইট মোডে টেক্সট ইনপুট এবং রাইটিং এরিয়া */
+[data-color-mode="light"] .w-md-editor-text-input textarea,
+[data-color-mode="light"] .w-md-editor-text-pre > code {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+/* ৩. ডার্ক মোড (Dark Mode) ফোর্স ফিক্স */
+[data-color-mode="dark"] .w-md-editor,
+[data-color-mode="dark"] .wmde-markdown,
+[data-color-mode="dark"] .w-md-editor-content,
+[data-color-mode="dark"] .w-md-editor-toolbar {
+  background-color: transparent !important;
+  color: #f8fafc !important; /* slate-50 */
+}
+
+/* ৪. প্রিভিউ মোডের প্রোজ (Prose) ফিক্স */
+.wmde-markdown {
+  @apply prose prose-slate dark:prose-invert max-w-none;
+}
+
+/* হেডিংগুলো যাতে লাইট মোডে স্পষ্ট দেখা যায় */
+[data-color-mode="light"] .wmde-markdown h1,
+[data-color-mode="light"] .wmde-markdown h2,
+[data-color-mode="light"] .wmde-markdown h3,
+[data-color-mode="light"] .wmde-markdown strong {
+  color: #000000 !important;
+}
+
+/* টুলবার বাটন কালার */
+.w-md-editor-toolbar ul li button {
+  color: inherit !important;
 }

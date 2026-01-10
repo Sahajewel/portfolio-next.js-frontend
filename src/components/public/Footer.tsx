@@ -55,10 +55,10 @@ const Footer = ({ onScrollToSection }: FooterProps) => {
               Quick Links
             </h4>
             <div className="space-y-2">
-              {["About", "Projects", "Blogs", "Contact"].map((link) => (
-                <button
+              {["Projects", "Blogs"].map((link) => (
+                <Link
                   key={link}
-                  onClick={() => handleScrollClick(link.toLowerCase())}
+                  href={`/${link.toLowerCase()}`}
                   className={`block transition-colors ${
                     theme === "dark"
                       ? "text-gray-300 hover:text-purple-400"
@@ -66,7 +66,7 @@ const Footer = ({ onScrollToSection }: FooterProps) => {
                   }`}
                 >
                   {link}
-                </button>
+                </Link>
               ))}
             </div>
           </div>

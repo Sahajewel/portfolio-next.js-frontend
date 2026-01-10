@@ -35,7 +35,12 @@ export default function NewProjectPage() {
     liveUrl: "",
     githubUrl: "",
     technologies: [] as string[],
-    category: "FULLSTACK" as "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS",
+    category: "FULLSTACK" as
+      | "FULLSTACK"
+      | "REACTTAILWINDJS"
+      | "HTMLCSSJS"
+      | "HTMLCSS"
+      | "OTHERS",
     featured: false,
   });
 
@@ -98,6 +103,11 @@ export default function NewProjectPage() {
 
   const categories = [
     { value: "FULLSTACK", label: "🚀 FullStack Project", icon: Layers },
+    {
+      value: "REACTTAILWINDJS",
+      label: " REACT/TAILWIND/JS Project",
+      icon: Layers,
+    },
     { value: "HTMLCSSJS", label: "⚡ HTML/CSS/JS Project", icon: FileCode },
     { value: "HTMLCSS", label: "🎨 HTML/CSS Project", icon: Code },
     { value: "OTHERS", label: "📱 Other Project", icon: FolderOpen },

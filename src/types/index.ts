@@ -7,17 +7,32 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
-
+export type BlogCategory =
+  | "JAVASCRIPT"
+  | "TYPESCRIPT"
+  | "NODEJS"
+  | "EXPRESSJS"
+  | "REACT"
+  | "NEXTJS"
+  | "HTMLCSS"
+  | "DATABASE"
+  | "DEVOPS"
+  | "CAREER"
+  | "OTHER";
 export interface Blog {
   id: string;
   title: string;
+  titleBn?: string;
   slug: string;
   content: string;
+  contentBn?: string;
   excerpt?: string;
+  excerptBn?: string;
   thumbnail?: string;
   published: boolean;
   views: number;
   tags: string[];
+  category: BlogCategory;
   metaTitle?: string;
   metaDesc?: string;
   createdAt: string;
@@ -26,7 +41,12 @@ export interface Blog {
   readTime?: string;
   authorId: string;
 }
-export type ProjectCategory = "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS";
+export type ProjectCategory =
+  | "FULLSTACK"
+  | "REACTTAILWINDJS"
+  | "HTMLCSSJS"
+  | "HTMLCSS"
+  | "OTHERS";
 export interface Project {
   id: string;
   title: string;

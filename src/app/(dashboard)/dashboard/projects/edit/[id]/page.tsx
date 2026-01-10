@@ -30,7 +30,12 @@ interface PageProps {
 }
 
 // ProjectCategory টাইপ
-type ProjectCategory = "FULLSTACK" | "HTMLCSSJS" | "HTMLCSS" | "OTHERS";
+type ProjectCategory =
+  | "FULLSTACK"
+  | "REACTTAILWINDJS"
+  | "HTMLCSSJS"
+  | "HTMLCSS"
+  | "OTHERS";
 
 export default function EditProjectPage({
   params,
@@ -56,6 +61,11 @@ export default function EditProjectPage({
 
   const categories = [
     { value: "FULLSTACK", label: "🚀 FullStack Project", icon: Layers },
+    {
+      value: "REACTTAILWINDJS",
+      label: "🔥 REACT/TAILWIND/JS Project",
+      icon: Layers,
+    },
     { value: "HTMLCSSJS", label: "⚡ HTML/CSS/JS Project", icon: FileCode },
     { value: "HTMLCSS", label: "🎨 HTML/CSS Project", icon: Code },
     { value: "OTHERS", label: "📱 Other Project", icon: FolderOpen },
