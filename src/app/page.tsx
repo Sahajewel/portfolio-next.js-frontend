@@ -940,7 +940,7 @@ const PortfolioHome = () => {
                 >
                   <Image
                     src="/saha.png"
-                    alt="Profile"
+                    alt="Saha Jewel Kumar - Full Stack Developer"
                     className="w-full h-full object-cover"
                     width={200}
                     height={200}

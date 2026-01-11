@@ -1,6 +1,5 @@
 // app/blogs/page.tsx
 import type { Metadata } from "next";
-
 import { blogAPI } from "@/lib/api";
 import BlogsClient from "@/components/blogs/BlogsClient";
 
@@ -21,9 +20,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function BlogsPage() {
-  const res = await blogAPI.getAll();
-  const blogs = res.data.data || res.data || [];
+// ⚡ CRITICAL: Cache configuration
+// Option 1: Revalidate every 10 seconds (ISR)
+export const revalidate = 10;
 
-  return <BlogsClient blogs={blogs} />;
+// Option 2: Always fetch fresh data (uncomment if you want real-time updates)
+// export const dynamic = 'force-dynamic';
+// export const fetchCache = 'force-no-store';
+
+export default async function BlogsPage() {
+  try {
+    const res = await blogAPI.getAll();
+    const blogs = res.data.data || res.data || [];
+
+    return <BlogsClient blogs={blogs} />;
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    // Fallback with empty blogs
+    return <BlogsClient blogs={[]} />;
+  }
 }

@@ -45,7 +45,7 @@ export default function EditBlogPage() {
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
   const [language, setLanguage] = useState<"en" | "bn">("en");
-  const [isSlugManual, setIsSlugManual] = useState(true); // এডিটের সময় স্লাগ ম্যানুয়াল রাখাই ভালো
+  const [isSlugManual, setIsSlugManual] = useState(true);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -61,7 +61,7 @@ export default function EditBlogPage() {
     thumbnail: "",
   });
 
-  // ডাটা ফেচ করা
+  // Fetch blog data
   useEffect(() => {
     const fetchBlog = async () => {
       try {
@@ -92,7 +92,7 @@ export default function EditBlogPage() {
     if (blogId) fetchBlog();
   }, [blogId, router]);
 
-  // অটো-স্লাগ (যদি টাইটেল চেঞ্জ করিস এবং অটো মোড অন থাকে)
+  // Auto-slug generation
   useEffect(() => {
     if (formData.title && !isSlugManual) {
       setFormData((prev) => ({
@@ -148,8 +148,11 @@ export default function EditBlogPage() {
       });
 
       toast.success("Blog updated successfully!");
-      router.push("/dashboard/blogs");
+      // Cache clear এবং redirect
       router.refresh();
+      router.push("/dashboard/blogs");
+      // Force reload for cache clear
+      window.location.href = "/dashboard/blogs";
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Update failed");
     } finally {
@@ -223,7 +226,7 @@ export default function EditBlogPage() {
                 name={language === "en" ? "title" : "titleBn"}
                 value={language === "en" ? formData.title : formData.titleBn}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-purple-500 outline-none dark:bg-slate-900 dark:border-slate-700"
+                className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-purple-500 outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-white"
               />
             </div>
 
@@ -244,7 +247,7 @@ export default function EditBlogPage() {
                       }));
                       setIsSlugManual(true);
                     }}
-                    className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700 font-mono text-sm"
+                    className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700 font-mono text-sm dark:text-white"
                   />
                   <button
                     type="button"
@@ -275,7 +278,7 @@ export default function EditBlogPage() {
                   language === "en" ? formData.excerpt : formData.excerptBn
                 }
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-4 py-3 rounded-xl border dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-purple-500 dark:text-white"
               />
             </div>
 
@@ -309,7 +312,7 @@ export default function EditBlogPage() {
                     key={idx}
                     type="button"
                     onClick={() => insertMarkdown(btn.s)}
-                    className="p-2 border rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="p-2 border rounded hover:bg-slate-100 dark:hover:bg-slate-700 dark:border-slate-600"
                   >
                     {btn.i}
                   </button>
@@ -317,35 +320,25 @@ export default function EditBlogPage() {
               </div>
 
               <div
-                className={`w-full rounded-2xl border transition-all duration-300 ${
-                  theme === "dark"
-                    ? "bg-slate-800/80 border-purple-500/20 text-white"
-                    : "bg-white/80 border-purple-200 text-slate-900 shadow-sm"
-                }`}
+                className="w-full rounded-2xl overflow-hidden"
                 data-color-mode={theme === "dark" ? "dark" : "light"}
               >
-                <div className="p-2">
-                  {/* এডিটর */}
-                  <MDEditor
-                    value={
-                      language === "en" ? formData.content : formData.contentBn
-                    }
-                    onChange={(val) =>
-                      setFormData((p) => ({
-                        ...p,
-                        [language === "en" ? "content" : "contentBn"]:
-                          val || "",
-                      }))
-                    }
-                    preview={preview ? "preview" : "edit"}
-                    height={400}
-                    // ইনলাইন স্টাইল দিয়ে ব্যাকগ্রাউন্ড ট্রান্সপারেন্ট রাখা যাতে তোর ডিভ-এর কালার পায়
-                    style={{ backgroundColor: "transparent" }}
-                    previewOptions={{
-                      className: "prose dark:prose-invert max-w-none",
-                    }}
-                  />
-                </div>
+                <MDEditor
+                  value={
+                    language === "en" ? formData.content : formData.contentBn
+                  }
+                  onChange={(val) =>
+                    setFormData((p) => ({
+                      ...p,
+                      [language === "en" ? "content" : "contentBn"]: val || "",
+                    }))
+                  }
+                  preview={preview ? "preview" : "edit"}
+                  height={400}
+                  previewOptions={{
+                    className: "prose dark:prose-invert max-w-none p-4",
+                  }}
+                />
               </div>
             </div>
 
@@ -353,7 +346,7 @@ export default function EditBlogPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Category
+                  Category *
                 </label>
                 <select
                   value={formData.category}
@@ -363,20 +356,23 @@ export default function EditBlogPage() {
                       category: e.target.value as BlogCategory,
                     }))
                   }
-                  className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700"
+                  className={`w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-purple-500 ${
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-700 text-white"
+                      : "bg-white border-slate-300 text-gray-900"
+                  }`}
                 >
-                  {[
-                    "JAVASCRIPT",
-                    "REACT",
-                    "NEXTJS",
-                    "NODEJS",
-                    "TYPESCRIPT",
-                    "DATABASE",
-                  ].map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
+                  <option value="JAVASCRIPT">JavaScript</option>
+                  <option value="TYPESCRIPT">TypeScript</option>
+                  <option value="NODEJS">Node.js</option>
+                  <option value="EXPRESSJS">Express.js</option>
+                  <option value="REACT">React</option>
+                  <option value="NEXTJS">Next.js</option>
+                  <option value="HTMLCSS">HTML/CSS</option>
+                  <option value="DATABASE">Database</option>
+                  <option value="DEVOPS">DevOps</option>
+                  <option value="CAREER">Career</option>
+                  <option value="OTHER">Other</option>
                 </select>
               </div>
               <div>
@@ -388,7 +384,7 @@ export default function EditBlogPage() {
                   name="thumbnail"
                   value={formData.thumbnail}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-xl border dark:bg-slate-900 dark:border-slate-700"
+                  className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-purple-500 dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                 />
               </div>
             </div>
@@ -411,6 +407,7 @@ export default function EditBlogPage() {
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, published: e.target.checked }))
                 }
+                className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
               />
               <label htmlFor="published" className="text-sm font-medium">
                 Published
