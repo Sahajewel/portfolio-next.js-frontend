@@ -100,7 +100,10 @@ export default function NewBlogPage() {
         router.refresh();
         router.push("/dashboard/blogs");
         // Public blog page এর cache ও clear করা
-        window.location.href = "/dashboard/blogs";
+        router.push("/dashboard/blogs")
+        setTimeout(()=>{
+          router.refresh();
+        },500)
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong");
