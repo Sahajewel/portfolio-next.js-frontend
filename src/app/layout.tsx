@@ -2,7 +2,7 @@
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -11,7 +11,8 @@ import SessionProvider from "@/components/public/SessionProvider";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { ThemeProvider } from "next-themes";
 
-const inter = Inter({ subsets: ["latin"] });
+// display: "swap" prevents invisible-text flash while font loads (small FOUT fix)
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: {
@@ -48,7 +49,7 @@ export const metadata: Metadata = {
     siteName: "Saha Jewel Kumar",
     images: [
       {
-        url: "https://sahajewelkumar.vercel.app/og-image.png", // public/og-image.png
+        url: "https://sahajewelkumar.vercel.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "Saha Jewel Kumar – Full Stack Developer Portfolio",
@@ -72,6 +73,17 @@ export const metadata: Metadata = {
   },
 };
 
+// Separate viewport export (Next.js 14+ requirement) — also disables
+// automatic zoom-jank on mobile inputs which can feel like "slow" UI.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -79,9 +91,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Speed up first connection to your image CDN(s) — shaves ~100-300ms
+            off the first hero/project image request */}
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SessionProvider>
+          {/* refetchOnWindowFocus/refetchInterval off: next-auth's default
+              SessionProvider polls + refetches on every tab focus, which
+              re-renders your whole tree (including the portfolio page)
+              every time the user tabs back in. Not needed for a public
+              portfolio site. */}
+          <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
             <LayoutWrapper>{children}</LayoutWrapper>
 
             <Toaster
