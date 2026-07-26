@@ -29,10 +29,13 @@ import {
   Moon,
   Menu,
   X,
+  Book,
+  User,
+  Clock,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { projectAPI } from "@/lib/api";
-import { Project } from "@/types";
+import { blogAPI, projectAPI } from "@/lib/api";
+import { Blog, Project } from "@/types";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -58,7 +61,7 @@ import { useRouter } from "next/navigation";
      moment real posts are live, the code is untouched, just hidden.
    ──────────────────────────────────────────────────────────────────────── */
 
-const BLOGS_ENABLED = false; // flip to true when real blog posts exist
+const BLOGS_ENABLED = true; // 35+ real posts confirmed — back on
 
 interface MousePosition {
   x: number;
@@ -200,14 +203,9 @@ const menuItems = [
   { name: "contact", type: "scroll" },
 ] as const;
 
-const SECTION_IDS = [
-  "home",
-  "about",
-  "skills",
-  "journey",
-  "projects",
-  "contact",
-];
+const SECTION_IDS = BLOGS_ENABLED
+  ? ["home", "about", "skills", "journey", "projects", "blogs", "contact"]
+  : ["home", "about", "skills", "journey", "projects", "contact"];
 
 // ─── Small pieces ───────────────────────────────────────────────────────────
 
@@ -222,6 +220,17 @@ const ProjectCardSkeleton = () => (
   </div>
 );
 
+const BlogCardSkeleton = () => (
+  <div className="rounded-2xl overflow-hidden border border-purple-500/20 bg-slate-800/30 animate-pulse h-[400px]">
+    <div className="h-48 bg-slate-700/40" />
+    <div className="p-6 space-y-3">
+      <div className="h-4 bg-slate-700/40 rounded w-1/2" />
+      <div className="h-4 bg-slate-700/40 rounded w-full" />
+      <div className="h-4 bg-slate-700/40 rounded w-3/4" />
+    </div>
+  </div>
+);
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const PortfolioHome = () => {
@@ -232,6 +241,8 @@ const PortfolioHome = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
+  const [blogsLoading, setBlogsLoading] = useState(BLOGS_ENABLED);
   const [result, setResult] = useState("");
   const { data: session } = useSession();
 
@@ -242,34 +253,39 @@ const PortfolioHome = () => {
     if (BLOGS_ENABLED) router.prefetch("/blogs");
   }, [router]);
 
+  // Nav-highlight fix: instead of comparing intersection *ratios* (which
+  // got confused once About grew taller after folding Philosophy into it —
+  // About would still "win" the ratio comparison even after Skills had
+  // scrolled into view), we now just check each section's top position
+  // directly against a fixed line near the top of the viewport. Whichever
+  // section's top has most recently crossed that line is the active one.
+  // This is deterministic and reacts correctly to both scroll AND
+  // scrollIntoView (nav clicks), fixing the "About stays active" bug.
   useEffect(() => {
     let raf = 0;
+    const ACTIVE_LINE = 160; // px from top of viewport
+
     const onScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         setIsScrolled(window.scrollY > 50);
+
+        let current = SECTION_IDS[0];
+        for (const id of SECTION_IDS) {
+          const el = document.getElementById(id);
+          if (el && el.getBoundingClientRect().top <= ACTIVE_LINE) {
+            current = id;
+          }
+        }
+        setActiveSection((prev) => (prev === current ? prev : current));
+
         raf = 0;
       });
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target?.id) setActiveSection(visible.target.id);
-      },
-      { rootMargin: "-100px 0px -60% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
-    );
-    SECTION_IDS.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // run once on mount so refresh mid-page highlights correctly
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -293,6 +309,14 @@ const PortfolioHome = () => {
       .then((res) => setFeaturedProjects((res.data?.data || []).slice(0, 3)))
       .catch(() => setFeaturedProjects([]))
       .finally(() => setProjectsLoading(false));
+
+    if (BLOGS_ENABLED) {
+      blogAPI
+        .getAll()
+        .then((res) => setFeaturedBlogs((res.data?.data || []).slice(0, 3)))
+        .catch(() => setFeaturedBlogs([]))
+        .finally(() => setBlogsLoading(false));
+    }
   }, []);
 
   const scrollToSection = useCallback((id: string) => {
@@ -1197,6 +1221,146 @@ const PortfolioHome = () => {
         </div>
       </section>
 
+      {/* ── BLOGS (re-enabled: 35+ real posts, not demo content) ── */}
+      {BLOGS_ENABLED && (
+        <section
+          id="blogs"
+          className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
+        >
+          <div className="max-w-7xl mx-auto w-full">
+            <div className="text-center mb-12">
+              <h2 className="text-5xl md:text-6xl font-bold mb-4">
+                <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                  Latest Blogs
+                </span>
+              </h2>
+              <p className={dark ? "text-gray-300" : "text-gray-600"}>
+                Thoughts and tutorials I've shared
+              </p>
+            </div>
+
+            {blogsLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <BlogCardSkeleton />
+                <BlogCardSkeleton />
+                <BlogCardSkeleton />
+              </div>
+            ) : featuredBlogs.length === 0 ? (
+              <div className="text-center py-12">
+                <p
+                  className={`text-xl ${dark ? "text-gray-300" : "text-gray-600"}`}
+                >
+                  No blogs available at the moment.
+                </p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+                {featuredBlogs.map((blog: Blog) => (
+                  <div
+                    key={blog.id}
+                    className={`group rounded-2xl overflow-hidden border transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-full ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/20" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/20"}`}
+                  >
+                    <div className="relative overflow-hidden h-48 flex-shrink-0">
+                      <Image
+                        src={
+                          blog.thumbnail ||
+                          "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop"
+                        }
+                        alt={blog.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        height={400}
+                        width={400}
+                        loading="lazy"
+                      />
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-t opacity-80 ${dark ? "from-slate-900 via-slate-900/50 to-transparent" : "from-white via-white/50 to-transparent"}`}
+                      />
+                    </div>
+                    <div className="p-6 space-y-4 flex-grow flex flex-col">
+                      <div className="flex-grow">
+                        <div className="flex items-center justify-between text-sm mb-3">
+                          <div
+                            className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
+                          >
+                            <User size={14} />
+                            <span className="line-clamp-1">
+                              {typeof blog.author === "string"
+                                ? blog.author
+                                : blog.author || "Admin"}
+                            </span>
+                          </div>
+                          <div
+                            className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
+                          >
+                            <Clock size={14} />
+                            <span className="whitespace-nowrap">
+                              {Math.ceil(
+                                (blog.content?.split(" ").length || 0) / 200,
+                              )}{" "}
+                              min
+                            </span>
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-bold mb-3 line-clamp-2">
+                          {blog.title}
+                        </h3>
+                        <p
+                          className={`text-sm leading-relaxed line-clamp-3 mb-4 ${dark ? "text-gray-300" : "text-gray-600"}`}
+                        >
+                          {blog.excerpt ||
+                            blog.content?.substring(0, 150) ||
+                            "Read more about this topic..."}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {(blog.tags || [])
+                            .slice(0, 3)
+                            .map((tag: string, i: number) => (
+                              <span
+                                key={i}
+                                className={`px-2 py-1 rounded text-xs border ${dark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-100 text-purple-700 border-purple-200"}`}
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          {(blog.tags || []).length > 3 && (
+                            <span
+                              className={`px-2 py-1 rounded text-xs border ${dark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-100 text-purple-700 border-purple-200"}`}
+                            >
+                              +{blog.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Link
+                        href={`/blogs/${blog.id}`}
+                        prefetch={false}
+                        className="w-full mt-auto px-4 py-2.5 text-purple-600 dark:text-purple-400 font-semibold rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 group"
+                      >
+                        <Book size={16} /> Read More
+                        <ArrowRight
+                          size={16}
+                          className="group-hover:translate-x-1 transition-transform"
+                        />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="text-center mt-12">
+              <Link
+                href="/blogs"
+                prefetch={true}
+                className="inline-flex items-center gap-2 px-8 py-3 border-2 border-purple-500 rounded-full font-semibold hover:bg-purple-500/10 transition-all"
+              >
+                <BookOpen size={20} /> View All Blogs
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── CONTACT ── */}
       <section
         id="contact"
@@ -1338,17 +1502,22 @@ const PortfolioHome = () => {
             <div>
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <div className="space-y-2">
-                {["About", "Skills", "Journey", "Projects", "Contact"].map(
-                  (link) => (
-                    <button
-                      key={link}
-                      onClick={() => scrollToSection(link.toLowerCase())}
-                      className={`block transition-colors ${dark ? "text-gray-300 hover:text-purple-400" : "text-gray-700 hover:text-purple-600"}`}
-                    >
-                      {link}
-                    </button>
-                  ),
-                )}
+                {[
+                  "About",
+                  "Skills",
+                  "Journey",
+                  "Projects",
+                  ...(BLOGS_ENABLED ? ["Blogs"] : []),
+                  "Contact",
+                ].map((link) => (
+                  <button
+                    key={link}
+                    onClick={() => scrollToSection(link.toLowerCase())}
+                    className={`block transition-colors ${dark ? "text-gray-300 hover:text-purple-400" : "text-gray-700 hover:text-purple-600"}`}
+                  >
+                    {link}
+                  </button>
+                ))}
               </div>
             </div>
             <div>
