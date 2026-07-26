@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
-import React, { useState, useEffect, useCallback, useRef, memo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Github,
   Linkedin,
@@ -29,41 +29,36 @@ import {
   Moon,
   Menu,
   X,
-  Book,
-  User,
-  Clock,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { blogAPI, projectAPI } from "@/lib/api";
-import { Blog, Project } from "@/types";
+import { projectAPI } from "@/lib/api";
+import { Project } from "@/types";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /* ────────────────────────────────────────────────────────────────────────
-   WHY THIS FILE IS FASTER THAN THE ORIGINAL (read this once):
+   TRIMMED STRUCTURE — 6 sections instead of 10:
+     Hero → About (+ mini philosophy strip) → Skills →
+     Journey (Education + Experience + Achievements merged) →
+     Projects → Contact
 
-   1. No more full-page `if (loading) return <Spinner/>`. Hero/About/Skills
-      render INSTANTLY. Only Projects/Blogs show a small skeleton while
-      their data loads. This alone fixes most of the "slow home page"
-      feeling — you were hiding the entire page behind one network call.
-
-   2. The mouse-follow cursor no longer calls setState on every mousemove.
-      It writes directly to a DOM node via a ref, so it never triggers a
-      React re-render (previously every mouse jiggle re-rendered the ~900
-      line component tree).
-
-   3. Active-section highlighting uses IntersectionObserver instead of a
-      scroll handler that called getBoundingClientRect() on 10 elements
-      every frame. IntersectionObserver is handled natively by the browser
-      and is dramatically cheaper.
-
-   4. Each section (Hero, About, Experience, Education, Skills, Projects,
-      Blogs, Achievements, Philosophy, Contact) is its own memo()-wrapped
-      component. Toggling the mobile menu, switching theme, or scrolling
-      no longer re-renders sections that didn't change.
+   Removed / merged vs the old version:
+   - "Achievements & Certifications" section deleted — its 4 badges now
+     show as small tags on the matching Journey card instead of a whole
+     separate section.
+   - "My Philosophy" section deleted — its 3 cards now live as a compact
+     3-column strip under the About text.
+   - "Technical Journey" + "Education" merged into one "My Journey"
+     timeline, chronological, so the story reads as one continuous path
+     instead of two separate near-duplicate sections.
+   - Blogs section is paused (see BLOGS_ENABLED below) since it looked
+     like placeholder/demo content — flip the flag back to true the
+     moment real posts are live, the code is untouched, just hidden.
    ──────────────────────────────────────────────────────────────────────── */
+
+const BLOGS_ENABLED = false; // flip to true when real blog posts exist
 
 interface MousePosition {
   x: number;
@@ -79,33 +74,21 @@ interface Skill {
   icon: string;
 }
 
-interface Experience {
-  company: string;
-  position: string;
-  duration: string;
-  location: string;
-  description: string;
-  achievements: string[];
-  technologies: string[];
-}
+type JourneyType = "education" | "work";
 
-interface EducationItem {
-  degree: string;
-  institution: string;
-  duration: string;
-  gpa: string;
-  achievements: string[];
-}
-
-interface Achievement {
+interface JourneyItem {
+  type: JourneyType;
   title: string;
-  issuer: string;
-  date: string;
-  icon: string;
+  org: string;
+  duration: string;
+  location?: string;
   description: string;
+  achievements: string[];
+  tags: string[];
+  badge?: string; // folded-in "achievement" highlight for this entry
 }
 
-// ─── Static Data (module scope — never recreated on render) ───────────────
+// ─── Static Data (module scope) ────────────────────────────────────────────
 
 const skills: Skill[] = [
   { name: "React.js", level: "Expert", category: "Frontend", icon: "⚛️" },
@@ -124,146 +107,109 @@ const skills: Skill[] = [
   { name: "MongoDB", level: "Intermediate", category: "Database", icon: "🍃" },
 ];
 
-const experiences: Experience[] = [
+// One chronological timeline — education, work, and the old "achievements"
+// badges are now attached to whichever entry they actually belong to.
+const journey: JourneyItem[] = [
   {
-    position: "Full Stack Development (Level 2)",
-    company: "Programming Hero",
-    duration: "2024 - Present",
-    location: "Remote",
+    type: "education",
+    title: "B.Sc. in Civil Engineering",
+    org: "Stamford University Bangladesh",
+    duration: "2009 - 2013",
     description:
-      "Deep diving into advanced Full Stack development with a focus on professional workflow and scalability.",
+      "Built a strong foundation in structural logic and project management before transitioning into software.",
     achievements: [
-      "Mastering TypeScript for building type-safe and robust applications.",
-      "Implementing advanced state management and complex backend architectures using Prisma and PostgreSQL.",
-      "Building production-grade applications with Next.js and Tailwind CSS.",
+      "Extensive experience in structural logic and project management",
+      "Decided to transition into tech to pursue long-term passion for software",
     ],
-    technologies: ["Next.js", "TypeScript", "Prisma", "PostgreSQL", "Redux"],
+    tags: [],
+    badge: "10+ yrs of engineering problem-solving carried into code",
   },
   {
-    position: "Web Development (Level 1)",
-    company: "Programming Hero",
+    type: "work",
+    title: "Web Development (Level 1)",
+    org: "Programming Hero",
     duration: "2023 - 2024",
     location: "Remote",
     description:
       "Foundation of web development, focusing on building responsive and interactive user interfaces.",
     achievements: [
-      "Built over 10+ frontend projects using React and modern JavaScript.",
-      "Developed a strong understanding of DOM manipulation and CSS frameworks.",
-      "Successfully integrated MongoDB for persistent data storage.",
+      "Built over 10+ frontend projects using React and modern JavaScript",
+      "Developed a strong understanding of DOM manipulation and CSS frameworks",
+      "Successfully integrated MongoDB for persistent data storage",
     ],
-    technologies: [
-      "React.js",
-      "JavaScript",
-      "Node.js",
-      "Express.js",
-      "MongoDB",
-    ],
+    tags: ["React.js", "JavaScript", "Node.js", "Express.js", "MongoDB"],
   },
-];
-
-const education: EducationItem[] = [
   {
-    degree: "B.Sc. in Civil Engineering",
-    institution: "Stamford University Bangladesh",
-    duration: "2009 - 2013",
-    gpa: "Completed",
+    type: "work",
+    title: "Full Stack Development (Level 2)",
+    org: "Programming Hero",
+    duration: "2024 - Present",
+    location: "Remote",
+    description:
+      "Deep diving into advanced Full Stack development with a focus on professional workflow and scalability.",
     achievements: [
-      "Extensive experience in structural logic and project management",
-      "Decided to transition into tech to pursue long-term passion for software",
+      "Mastering TypeScript for building type-safe and robust applications",
+      "Implementing advanced state management and complex backend architectures using Prisma and PostgreSQL",
+      "Building production-grade applications with Next.js and Tailwind CSS",
     ],
+    tags: ["Next.js", "TypeScript", "Prisma", "PostgreSQL", "Redux"],
+    badge: "Mastered Next.js 15+ (Server Components, Server Actions)",
   },
   {
-    degree: "Professional Web Development",
-    institution: "Programming Hero",
+    type: "education",
+    title: "Professional Web Development — Certificate",
+    org: "Programming Hero",
     duration: "2023 - 2025",
-    gpa: "Certificate",
+    description:
+      "Two years dedicated to becoming a production-ready MERN & Next.js developer.",
     achievements: [
       "Successfully mastered MERN & Next.js stack through rigorous training",
       "Dedicated 2+ years to becoming a production-ready developer",
     ],
+    tags: [],
+    badge: "Completed 6-month intensive training, 10+ full-scale apps built",
   },
 ];
 
-const achievements: Achievement[] = [
+// Folded into About — 3 short lines instead of a whole section.
+const philosophyStrip = [
   {
-    title: "Full Stack Development Professional",
-    issuer: "Programming Hero",
-    date: "2024",
-    icon: "🎓",
-    description:
-      "Successfully completed an intensive 6-month training on MERN stack and Next.js, building 10+ full-scale applications.",
-  },
-  {
-    title: "Career Transition Excellence",
-    issuer: "Personal Milestone",
-    date: "2024",
-    icon: "🚀",
-    description:
-      "Successfully pivoted from a 10-year career in Civil Engineering to Software Development, mastering modern tech stacks in 2 years.",
-  },
-  {
-    title: "Logical System Design",
-    issuer: "Engineering Background",
-    date: "2013 - Present",
-    icon: "🏗️",
-    description:
-      "Leveraging 10+ years of structural logic and engineering problem-solving skills into efficient software architecture.",
-  },
-  {
-    title: "Next.js Advanced Implementation",
-    issuer: "Learning Milestone",
-    date: "2025",
-    icon: "⚡",
-    description:
-      "Mastered Next.js 15+ features, including Server Components, Server Actions, and advanced performance optimization.",
-  },
-];
-
-const codingPhilosophy = [
-  {
-    title: "Precision Engineering",
     icon: "🎯",
-    text: "Coming from a Civil Engineering background, I apply the same structural integrity and precision to my code that I used to apply to buildings.",
+    title: "Precision Engineering",
+    text: "Same structural rigor from Civil Engineering, now applied to code.",
   },
   {
-    title: "Continuous Growth",
     icon: "📈",
-    text: "For me, coding is a marathon. I've dedicated the last 2 years to mastering the MERN stack and Next.js, and I'm still learning every day.",
+    title: "Continuous Growth",
+    text: "Two years in, still learning something new every day.",
   },
   {
-    title: "Problem Solver",
     icon: "🧩",
-    text: "I don't just write code; I build solutions. My goal is to create scalable and efficient systems that solve real-world problems.",
+    title: "Problem Solver",
+    text: "I build solutions, not just code — scalable and efficient by default.",
   },
 ];
 
 const menuItems = [
   { name: "home", type: "scroll" },
   { name: "about", type: "scroll" },
-  { name: "experience", type: "scroll" },
-  { name: "education", type: "scroll" },
   { name: "skills", type: "scroll" },
+  { name: "journey", type: "scroll" },
   { name: "projects", type: "link", href: "/projects" },
-  { name: "blogs", type: "link", href: "/blogs" },
-  { name: "achievements", type: "scroll" },
-  { name: "philosophy", type: "scroll" },
+  ...(BLOGS_ENABLED ? [{ name: "blogs", type: "link", href: "/blogs" }] : []),
   { name: "contact", type: "scroll" },
 ] as const;
 
 const SECTION_IDS = [
   "home",
   "about",
-  "experience",
-  "education",
   "skills",
+  "journey",
   "projects",
-  "blogs",
-  "achievements",
-  "philosophy",
   "contact",
 ];
 
-// ─── Small memoized presentational pieces ──────────────────────────────────
+// ─── Small pieces ───────────────────────────────────────────────────────────
 
 const ProjectCardSkeleton = () => (
   <div className="rounded-2xl overflow-hidden border border-purple-500/20 bg-slate-800/30 animate-pulse h-[420px]">
@@ -272,17 +218,6 @@ const ProjectCardSkeleton = () => (
       <div className="h-4 bg-slate-700/40 rounded w-3/4" />
       <div className="h-4 bg-slate-700/40 rounded w-full" />
       <div className="h-4 bg-slate-700/40 rounded w-2/3" />
-    </div>
-  </div>
-);
-
-const BlogCardSkeleton = () => (
-  <div className="rounded-2xl overflow-hidden border border-purple-500/20 bg-slate-800/30 animate-pulse h-[400px]">
-    <div className="h-48 bg-slate-700/40" />
-    <div className="p-6 space-y-3">
-      <div className="h-4 bg-slate-700/40 rounded w-1/2" />
-      <div className="h-4 bg-slate-700/40 rounded w-full" />
-      <div className="h-4 bg-slate-700/40 rounded w-3/4" />
     </div>
   </div>
 );
@@ -296,23 +231,17 @@ const PortfolioHome = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [isScrolled, setIsScrolled] = useState(false);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
-  const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
-  // Two independent flags instead of one big `loading` so the rest of the
-  // page never has to wait on either of them.
   const [projectsLoading, setProjectsLoading] = useState(true);
-  const [blogsLoading, setBlogsLoading] = useState(true);
   const [result, setResult] = useState("");
   const { data: session } = useSession();
 
   const cursorRef = useRef<HTMLDivElement>(null);
 
-  // Prefetch pages on mount for instant navigation
   useEffect(() => {
     router.prefetch("/projects");
-    router.prefetch("/blogs");
+    if (BLOGS_ENABLED) router.prefetch("/blogs");
   }, [router]);
 
-  // ── Scroll shadow (nav bg) — cheap, passive, no DOM measuring ──
   useEffect(() => {
     let raf = 0;
     const onScroll = () => {
@@ -326,8 +255,6 @@ const PortfolioHome = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ── Active section via IntersectionObserver (replaces per-frame
-  //    getBoundingClientRect on every section) ──
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -338,16 +265,13 @@ const PortfolioHome = () => {
       },
       { rootMargin: "-100px 0px -60% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
     );
-
     SECTION_IDS.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
-
     return () => observer.disconnect();
   }, []);
 
-  // ── Cursor glow: direct DOM write, zero React re-renders ──
   useEffect(() => {
     let raf = 0;
     const onMove = (e: MouseEvent) => {
@@ -363,19 +287,12 @@ const PortfolioHome = () => {
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  // ── Data fetching: independent per-section loading, doesn't block hero ──
   useEffect(() => {
     projectAPI
       .getAll()
       .then((res) => setFeaturedProjects((res.data?.data || []).slice(0, 3)))
       .catch(() => setFeaturedProjects([]))
       .finally(() => setProjectsLoading(false));
-
-    blogAPI
-      .getAll()
-      .then((res) => setFeaturedBlogs((res.data?.data || []).slice(0, 3)))
-      .catch(() => setFeaturedBlogs([]))
-      .finally(() => setBlogsLoading(false));
   }, []);
 
   const scrollToSection = useCallback((id: string) => {
@@ -415,8 +332,6 @@ const PortfolioHome = () => {
 
   const dark = theme === "dark";
 
-  // NOTE: no more full-page loading gate here. Hero renders immediately.
-
   return (
     <div
       className={`min-h-screen relative overflow-hidden transition-colors duration-300 ${dark ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white" : "bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50 text-gray-900"}`}
@@ -434,7 +349,7 @@ const PortfolioHome = () => {
         />
       </div>
 
-      {/* Cursor Effect — moved via ref, never re-renders React */}
+      {/* Cursor Effect — DOM-ref only, never triggers a React re-render */}
       <div
         ref={cursorRef}
         className={`fixed top-0 left-0 w-6 h-6 rounded-full pointer-events-none z-50 mix-blend-screen will-change-transform ${dark ? "bg-purple-500/30" : "bg-purple-400/20"}`}
@@ -450,7 +365,6 @@ const PortfolioHome = () => {
               <Sparkles className="inline mb-1" size={20} /> SAHA
             </div>
 
-            {/* Desktop Menu */}
             <div className="hidden xl:flex space-x-1 items-center">
               {menuItems.map((item) =>
                 item.type === "scroll" ? (
@@ -513,7 +427,6 @@ const PortfolioHome = () => {
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
             <div className="flex items-center gap-2 xl:hidden">
               <button
                 onClick={toggleTheme}
@@ -535,7 +448,6 @@ const PortfolioHome = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div
             className={`xl:hidden fixed inset-0 top-16 z-[9998] flex flex-col ${dark ? "bg-[#3A1C61] text-white" : "bg-white text-gray-900"}`}
@@ -569,7 +481,6 @@ const PortfolioHome = () => {
                 ))}
               </div>
             </div>
-
             <div
               className={`p-4 border-t ${dark ? "border-gray-800 bg-slate-900" : "border-gray-200 bg-white"}`}
             >
@@ -773,7 +684,6 @@ const PortfolioHome = () => {
                 <div
                   className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden border-4 ${dark ? "bg-slate-900 border-slate-900" : "bg-white border-white"}`}
                 >
-                  {/* priority + explicit sizes = fastest possible LCP for hero image */}
                   <Image
                     src="/saha.png"
                     alt="Saha Jewel Kumar - Full Stack Developer"
@@ -795,7 +705,7 @@ const PortfolioHome = () => {
         </div>
       </section>
 
-      {/* ── ABOUT ── */}
+      {/* ── ABOUT (+ philosophy strip folded in) ── */}
       <section
         id="about"
         className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
@@ -812,7 +722,7 @@ const PortfolioHome = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid md:grid-cols-2 gap-8 items-center mb-12">
             <div
               className={`space-y-6 text-lg leading-relaxed ${dark ? "text-gray-300" : "text-gray-700"}`}
             >
@@ -827,23 +737,16 @@ const PortfolioHome = () => {
                   two years ago,
                 </span>{" "}
                 and since then I have continuously worked on mastering the
-                modern web ecosystem. I prioritize writing clean, efficient, and
-                maintainable code while following best practices in both
-                frontend and backend development.
+                modern web ecosystem, prioritizing clean, efficient,
+                maintainable code.
               </p>
               <p>
                 I specialize in the{" "}
                 <span className="text-pink-400 font-semibold">
                   MERN stack and Next.js
                 </span>{" "}
-                working with technologies such as TypeScript, Prisma, and
-                PostgreSQL to design robust backend systems and intuitive,
-                user-friendly interfaces.
-              </p>
-              <p>
-                Currently based in Japan, I actively sharpen my skills by
-                studying system design, exploring new documentation, and
-                building side projects that reflect real-world use cases.
+                working with TypeScript, Prisma, and PostgreSQL to design robust
+                backend systems and intuitive interfaces.
               </p>
               <p className="text-purple-400 italic">
                 💡 "Code is like humor. When you have to explain it, it's bad."
@@ -897,168 +800,22 @@ const PortfolioHome = () => {
               ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ── EXPERIENCE ── */}
-      <section
-        id="experience"
-        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
-      >
-        <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Technical Journey
-              </span>
-            </h2>
-            <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              My learning and implementation path
-            </p>
-          </div>
-
-          <div className="space-y-8">
-            {experiences.map((exp, index) => (
-              <div key={index} className="group relative">
-                {index < experiences.length - 1 && (
-                  <div className="hidden md:block absolute left-8 top-20 w-0.5 h-full bg-gradient-to-b from-purple-500 to-transparent" />
-                )}
-                <div
-                  className={`rounded-2xl border p-8 transition-all hover:shadow-xl ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/10" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/10"}`}
-                >
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Building2 className="text-white" size={32} />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                        <div>
-                          <h3 className="text-2xl font-bold mb-1">
-                            {exp.position}
-                          </h3>
-                          <p className="text-xl text-purple-400 font-semibold">
-                            {exp.company}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div
-                            className={`flex items-center gap-2 mb-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                          >
-                            <Calendar size={16} />
-                            <span>{exp.duration}</span>
-                          </div>
-                          <div
-                            className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                          >
-                            <MapPin size={16} />
-                            <span>{exp.location}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <p
-                        className={`mb-4 leading-relaxed ${dark ? "text-gray-300" : "text-gray-700"}`}
-                      >
-                        {exp.description}
-                      </p>
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-purple-400 mb-2">
-                          Key Achievements:
-                        </h4>
-                        <ul className="space-y-1">
-                          {exp.achievements.map((a, i) => (
-                            <li
-                              key={i}
-                              className={`flex items-start gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                            >
-                              <span className="text-purple-400 mt-1">▸</span>
-                              <span>{a}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {exp.technologies.map((tech) => (
-                          <span
-                            key={tech}
-                            className={`px-3 py-1 rounded-full text-sm border ${dark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-100 text-purple-700 border-purple-200"}`}
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── EDUCATION ── */}
-      <section
-        id="education"
-        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
-      >
-        <div className="max-w-5xl mx-auto w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Education
-              </span>
-            </h2>
-            <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              My academic background
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-8">
-            {education.map((edu, index) => (
+          {/* Philosophy — folded in as a compact strip, no longer its own section */}
+          <div className="grid md:grid-cols-3 gap-4">
+            {philosophyStrip.map((item, index) => (
               <div
                 key={index}
-                className={`group rounded-2xl p-8 transition-all hover:scale-105 hover:shadow-xl border ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/10" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/10"}`}
+                className={`flex items-start gap-3 p-4 rounded-xl border ${dark ? "bg-slate-800/30 border-purple-500/10" : "bg-white/40 border-purple-100"}`}
               >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:rotate-12 transition-transform">
-                    <GraduationCap className="text-white" size={28} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-1">{edu.degree}</h3>
-                    <p className="text-purple-400 font-semibold">
-                      {edu.institution}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className={`flex items-center gap-4 text-sm mb-4 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Calendar size={14} />
-                    <span>{edu.duration}</span>
-                  </div>
-                  <div className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full font-semibold">
-                    {edu.gpa}
-                  </div>
-                </div>
+                <span className="text-2xl">{item.icon}</span>
                 <div>
-                  <h4 className="text-sm font-semibold text-purple-400 mb-2">
-                    Achievements:
-                  </h4>
-                  <ul className="space-y-1">
-                    {edu.achievements.map((a, i) => (
-                      <li
-                        key={i}
-                        className={`flex items-start gap-2 text-sm ${dark ? "text-gray-300" : "text-gray-600"}`}
-                      >
-                        <Trophy
-                          size={14}
-                          className="text-yellow-400 mt-0.5 flex-shrink-0"
-                        />
-                        <span>{a}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <h4 className="font-semibold text-sm">{item.title}</h4>
+                  <p
+                    className={`text-xs mt-0.5 ${dark ? "text-gray-400" : "text-gray-600"}`}
+                  >
+                    {item.text}
+                  </p>
                 </div>
               </div>
             ))}
@@ -1178,6 +935,118 @@ const PortfolioHome = () => {
                       {tech}
                     </span>
                   ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── JOURNEY (merged Education + Experience + Achievement badges) ── */}
+      <section
+        id="journey"
+        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
+      >
+        <div className="max-w-5xl mx-auto w-full">
+          <div className="text-center mb-12">
+            <h2 className="text-5xl md:text-6xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                My Journey
+              </span>
+            </h2>
+            <p className={dark ? "text-gray-300" : "text-gray-600"}>
+              From engineering to full stack — education, work, and milestones
+              in one timeline
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {journey.map((item, index) => (
+              <div key={index} className="group relative">
+                {index < journey.length - 1 && (
+                  <div className="hidden md:block absolute left-8 top-20 w-0.5 h-full bg-gradient-to-b from-purple-500 to-transparent" />
+                )}
+                <div
+                  className={`rounded-2xl border p-8 transition-all hover:shadow-xl ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/10" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/10"}`}
+                >
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-shrink-0">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {item.type === "education" ? (
+                          <GraduationCap className="text-white" size={30} />
+                        ) : (
+                          <Building2 className="text-white" size={30} />
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                        <div>
+                          <h3 className="text-2xl font-bold mb-1">
+                            {item.title}
+                          </h3>
+                          <p className="text-xl text-purple-400 font-semibold">
+                            {item.org}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div
+                            className={`flex items-center gap-2 mb-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
+                          >
+                            <Calendar size={16} />
+                            <span>{item.duration}</span>
+                          </div>
+                          {item.location && (
+                            <div
+                              className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
+                            >
+                              <MapPin size={16} />
+                              <span>{item.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <p
+                        className={`mb-4 leading-relaxed ${dark ? "text-gray-300" : "text-gray-700"}`}
+                      >
+                        {item.description}
+                      </p>
+
+                      {item.badge && (
+                        <div
+                          className={`inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full text-xs font-semibold ${dark ? "bg-yellow-500/10 text-yellow-300 border border-yellow-500/20" : "bg-yellow-50 text-yellow-700 border border-yellow-200"}`}
+                        >
+                          <Trophy size={12} /> {item.badge}
+                        </div>
+                      )}
+
+                      <ul className="space-y-1 mb-4">
+                        {item.achievements.map((a, i) => (
+                          <li
+                            key={i}
+                            className={`flex items-start gap-2 text-sm ${dark ? "text-gray-300" : "text-gray-600"}`}
+                          >
+                            <span className="text-purple-400 mt-1">▸</span>
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {item.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className={`px-3 py-1 rounded-full text-sm border ${dark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-100 text-purple-700 border-purple-200"}`}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1328,231 +1197,6 @@ const PortfolioHome = () => {
         </div>
       </section>
 
-      {/* ── BLOGS ── */}
-      <section
-        id="blogs"
-        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
-      >
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Latest Blogs
-              </span>
-            </h2>
-            <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              Thoughts and tutorials I've shared
-            </p>
-          </div>
-
-          {blogsLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <BlogCardSkeleton />
-              <BlogCardSkeleton />
-              <BlogCardSkeleton />
-            </div>
-          ) : featuredBlogs.length === 0 ? (
-            <div className="text-center py-12">
-              <p
-                className={`text-xl ${dark ? "text-gray-300" : "text-gray-600"}`}
-              >
-                No blogs available at the moment.
-              </p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-              {featuredBlogs.map((blog: Blog) => (
-                <div
-                  key={blog.id}
-                  className={`group rounded-2xl overflow-hidden border transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-full ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/20" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/20"}`}
-                >
-                  <div className="relative overflow-hidden h-48 flex-shrink-0">
-                    <Image
-                      src={
-                        blog.thumbnail ||
-                        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop"
-                      }
-                      alt={blog.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      height={400}
-                      width={400}
-                      loading="lazy"
-                    />
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-t opacity-80 ${dark ? "from-slate-900 via-slate-900/50 to-transparent" : "from-white via-white/50 to-transparent"}`}
-                    />
-                  </div>
-                  <div className="p-6 space-y-4 flex-grow flex flex-col">
-                    <div className="flex-grow">
-                      <div className="flex items-center justify-between text-sm mb-3">
-                        <div
-                          className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                        >
-                          <User size={14} />
-                          <span className="line-clamp-1">
-                            {typeof blog.author === "string"
-                              ? blog.author
-                              : blog.author || "Admin"}
-                          </span>
-                        </div>
-                        <div
-                          className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                        >
-                          <Clock size={14} />
-                          <span className="whitespace-nowrap">
-                            {Math.ceil(
-                              (blog.content?.split(" ").length || 0) / 200,
-                            )}{" "}
-                            min
-                          </span>
-                        </div>
-                      </div>
-                      <h3 className="text-xl font-bold mb-3 line-clamp-2">
-                        {blog.title}
-                      </h3>
-                      <p
-                        className={`text-sm leading-relaxed line-clamp-3 mb-4 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                      >
-                        {blog.excerpt ||
-                          blog.content?.substring(0, 150) ||
-                          "Read more about this topic..."}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(blog.tags || [])
-                          .slice(0, 3)
-                          .map((tag: string, i: number) => (
-                            <span
-                              key={i}
-                              className={`px-2 py-1 rounded text-xs border ${dark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-100 text-purple-700 border-purple-200"}`}
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        {(blog.tags || []).length > 3 && (
-                          <span
-                            className={`px-2 py-1 rounded text-xs border ${dark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-100 text-purple-700 border-purple-200"}`}
-                          >
-                            +{blog.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Link
-                      href={`/blogs/${blog.id}`}
-                      prefetch={false}
-                      className="w-full mt-auto px-4 py-2.5 text-purple-600 dark:text-purple-400 font-semibold rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 group"
-                    >
-                      <Book size={16} /> Read More
-                      <ArrowRight
-                        size={16}
-                        className="group-hover:translate-x-1 transition-transform"
-                      />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center mt-12">
-            <Link
-              href="/blogs"
-              prefetch={true}
-              className="inline-flex items-center gap-2 px-8 py-3 border-2 border-purple-500 rounded-full font-semibold hover:bg-purple-500/10 transition-all"
-            >
-              <BookOpen size={20} /> View All Blogs
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── ACHIEVEMENTS ── */}
-      <section
-        id="achievements"
-        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
-      >
-        <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Achievements & Certifications
-              </span>
-            </h2>
-            <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              Recognition and milestones
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {achievements.map((achievement, index) => (
-              <div
-                key={index}
-                className={`group p-8 rounded-2xl border transition-all hover:scale-105 hover:shadow-xl ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/10" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/10"}`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="text-5xl group-hover:scale-110 transition-transform">
-                    {achievement.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2">
-                      {achievement.title}
-                    </h3>
-                    <div
-                      className={`flex items-center gap-3 text-sm mb-3 ${dark ? "text-gray-300" : "text-gray-600"}`}
-                    >
-                      <span className="text-purple-400 font-semibold">
-                        {achievement.issuer}
-                      </span>
-                      <span>•</span>
-                      <span>{achievement.date}</span>
-                    </div>
-                    <p
-                      className={`text-sm ${dark ? "text-gray-300" : "text-gray-600"}`}
-                    >
-                      {achievement.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PHILOSOPHY ── */}
-      <section
-        id="philosophy"
-        className="min-h-[80vh] flex items-center justify-center px-4 py-12 relative z-10"
-      >
-        <div className="max-w-6xl mx-auto w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                My Philosophy
-              </span>
-            </h2>
-            <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              The principles that drive my development process
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {codingPhilosophy.map((item, index) => (
-              <div
-                key={index}
-                className={`group p-8 rounded-2xl border transition-all hover:scale-105 hover:shadow-xl ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20 hover:border-purple-500/50 hover:shadow-purple-500/10" : "bg-white/50 backdrop-blur-sm border-purple-200 hover:border-purple-300 hover:shadow-purple-200/10"}`}
-              >
-                <div className="text-5xl mb-4">{item.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p
-                  className={`text-sm ${dark ? "text-gray-300" : "text-gray-600"}`}
-                >
-                  {item.text}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── CONTACT ── */}
       <section
         id="contact"
@@ -1694,15 +1338,17 @@ const PortfolioHome = () => {
             <div>
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <div className="space-y-2">
-                {["About", "Projects", "Blogs", "Contact"].map((link) => (
-                  <button
-                    key={link}
-                    onClick={() => scrollToSection(link.toLowerCase())}
-                    className={`block transition-colors ${dark ? "text-gray-300 hover:text-purple-400" : "text-gray-700 hover:text-purple-600"}`}
-                  >
-                    {link}
-                  </button>
-                ))}
+                {["About", "Skills", "Journey", "Projects", "Contact"].map(
+                  (link) => (
+                    <button
+                      key={link}
+                      onClick={() => scrollToSection(link.toLowerCase())}
+                      className={`block transition-colors ${dark ? "text-gray-300 hover:text-purple-400" : "text-gray-700 hover:text-purple-600"}`}
+                    >
+                      {link}
+                    </button>
+                  ),
+                )}
               </div>
             </div>
             <div>
@@ -1781,12 +1427,6 @@ const PortfolioHome = () => {
           display: -webkit-box;
           -webkit-box-orient: vertical;
           -webkit-line-clamp: 1;
-        }
-        .line-clamp-2 {
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 2;
         }
         .line-clamp-3 {
           overflow: hidden;
