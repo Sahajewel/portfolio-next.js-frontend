@@ -22,6 +22,9 @@ export const metadata: Metadata = {
 
   description:
     "Full Stack Developer specializing in MERN stack, Next.js, TypeScript, Prisma, and PostgreSQL. Building scalable, high-performance web applications. Based in Japan.",
+  verification: {
+    google: "hwRTuKLITXBKjOzVbn_nvekSECK8jFVwASTTIDbKnTg",
+  },
 
   keywords: [
     "Full Stack Developer",
