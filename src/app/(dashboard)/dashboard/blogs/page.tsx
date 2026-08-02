@@ -31,22 +31,68 @@ import {
   Briefcase,
 } from "lucide-react";
 
-// Same category set as the public /blogs page's "Browse by Category"
-// grid, so the admin side matches what visitors see. Each entry has an
-// icon + accent color so the cards look like the public page's category
-// tiles instead of plain filter pills.
-const CATEGORY_META: Record<string, { icon: typeof Code2; color: string }> = {
-  JavaScript: { icon: Code2, color: "from-orange-500 to-amber-500" },
-  TypeScript: { icon: FileCode, color: "from-blue-500 to-sky-500" },
-  "Node.js": { icon: Server, color: "from-green-500 to-emerald-500" },
-  "Express.js": { icon: Server, color: "from-slate-500 to-slate-600" },
-  React: { icon: MonitorSmartphone, color: "from-cyan-500 to-blue-500" },
-  "Next.js": { icon: Rocket, color: "from-gray-700 to-gray-900" },
-  "HTML/CSS": { icon: Palette, color: "from-orange-500 to-red-500" },
-  Database: { icon: Database, color: "from-indigo-500 to-purple-500" },
-  DevOps: { icon: Terminal, color: "from-teal-500 to-green-600" },
-  Career: { icon: Briefcase, color: "from-pink-500 to-rose-500" },
-  Other: { icon: Layers, color: "from-gray-500 to-gray-600" },
+// The database stores category as a Prisma ENUM — uppercase, no spaces
+// or punctuation (see schema.prisma `BlogCategory`): JAVASCRIPT,
+// TYPESCRIPT, NODEJS, EXPRESSJS, REACT, NEXTJS, HTMLCSS, DATABASE,
+// DEVOPS, CAREER, OTHER. That's what blog.category actually equals —
+// "JavaScript" (title case) never matches it. So CATEGORY_META is now
+// keyed by the real enum value, with a separate `label` for the pretty
+// text shown on each card.
+const CATEGORY_META: Record<
+  string,
+  { label: string; icon: typeof Code2; color: string }
+> = {
+  JAVASCRIPT: {
+    label: "JavaScript",
+    icon: Code2,
+    color: "from-orange-500 to-amber-500",
+  },
+  TYPESCRIPT: {
+    label: "TypeScript",
+    icon: FileCode,
+    color: "from-blue-500 to-sky-500",
+  },
+  NODEJS: {
+    label: "Node.js",
+    icon: Server,
+    color: "from-green-500 to-emerald-500",
+  },
+  EXPRESSJS: {
+    label: "Express.js",
+    icon: Server,
+    color: "from-slate-500 to-slate-600",
+  },
+  REACT: {
+    label: "React",
+    icon: MonitorSmartphone,
+    color: "from-cyan-500 to-blue-500",
+  },
+  NEXTJS: {
+    label: "Next.js",
+    icon: Rocket,
+    color: "from-gray-700 to-gray-900",
+  },
+  HTMLCSS: {
+    label: "HTML/CSS",
+    icon: Palette,
+    color: "from-orange-500 to-red-500",
+  },
+  DATABASE: {
+    label: "Database",
+    icon: Database,
+    color: "from-indigo-500 to-purple-500",
+  },
+  DEVOPS: {
+    label: "DevOps",
+    icon: Terminal,
+    color: "from-teal-500 to-green-600",
+  },
+  CAREER: {
+    label: "Career",
+    icon: Briefcase,
+    color: "from-pink-500 to-rose-500",
+  },
+  OTHER: { label: "Other", icon: Layers, color: "from-gray-500 to-gray-600" },
 };
 const CATEGORY_ORDER = Object.keys(CATEGORY_META);
 
@@ -166,7 +212,7 @@ export default function DashboardBlogsPage() {
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const blog of blogs) {
-      const cat = (blog as any).category || "Other";
+      const cat = (blog as any).category || "OTHER";
       counts[cat] = (counts[cat] || 0) + 1;
     }
     return counts;
@@ -178,7 +224,7 @@ export default function DashboardBlogsPage() {
   const categoryFilteredBlogs = useMemo(() => {
     if (!selectedCategory) return blogs;
     return blogs.filter(
-      (blog) => ((blog as any).category || "Other") === selectedCategory,
+      (blog) => ((blog as any).category || "OTHER") === selectedCategory,
     );
   }, [blogs, selectedCategory]);
 
@@ -199,7 +245,7 @@ export default function DashboardBlogsPage() {
   };
 
   const sectionHeading = selectedCategory
-    ? `${selectedCategory} Posts`
+    ? `${CATEGORY_META[selectedCategory]?.label || selectedCategory} Posts`
     : "All Posts";
 
   if (loading) {
@@ -295,7 +341,10 @@ export default function DashboardBlogsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   selectedCategory
-                    ? `Search within ${selectedCategory}...`
+                    ? `Search within ${
+                        CATEGORY_META[selectedCategory]?.label ||
+                        selectedCategory
+                      }...`
                     : "Search blogs by title, tags, or content..."
                 }
                 className={`w-full pl-11 pr-10 py-3.5 rounded-xl border transition-colors ${
@@ -412,7 +461,7 @@ export default function DashboardBlogsPage() {
                           theme === "dark" ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {cat}
+                        {meta.label}
                       </p>
                       <p
                         className={`text-xs ${
