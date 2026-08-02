@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { blogAPI } from "@/lib/api";
 import { Blog } from "@/types";
@@ -16,11 +17,33 @@ import {
   Calendar,
   TrendingUp,
   Sparkles,
+  Search,
+  X,
 } from "lucide-react";
+
+// Same category list as the "Create New Blog" form's Category dropdown.
+// Keeping this as a single source of truth here means if you add a new
+// category to the create-blog form later, add it here too and the
+// filter row will show it automatically.
+const CATEGORIES = [
+  "JavaScript",
+  "TypeScript",
+  "Node.js",
+  "Express.js",
+  "React",
+  "Next.js",
+  "HTML/CSS",
+  "Database",
+  "DevOps",
+  "Career",
+  "Other",
+];
 
 export default function DashboardBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -92,7 +115,7 @@ export default function DashboardBlogsPage() {
       {
         duration: 10000,
         position: "top-center",
-      }
+      },
     );
   };
 
@@ -109,24 +132,66 @@ export default function DashboardBlogsPage() {
 
   const togglePublishStatus = async (
     id: string,
-    currentlyPublished: boolean
+    currentlyPublished: boolean,
   ) => {
     try {
       await blogAPI.update(id, { published: !currentlyPublished });
       setBlogs(
         blogs.map((blog) =>
-          blog.id === id ? { ...blog, published: !currentlyPublished } : blog
-        )
+          blog.id === id ? { ...blog, published: !currentlyPublished } : blog,
+        ),
       );
       toast.success(
         currentlyPublished
           ? "Blog unpublished successfully"
-          : "Blog published successfully"
+          : "Blog published successfully",
       );
     } catch (error) {
       console.error("Error updating blog:", error);
       toast.error("Failed to update blog");
     }
+  };
+
+  // How many blogs fall into each category — shown as a small count badge
+  // on each filter pill so you can see at a glance where most of your
+  // 45+ posts actually live before you even click anything.
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const blog of blogs) {
+      const cat = (blog as any).category || "Other";
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return counts;
+  }, [blogs]);
+
+  // Search matches title, excerpt, and content (so you can find a post
+  // even if you only remember a phrase from inside it, not the title).
+  // Category filter is applied on top of the search filter.
+  const filteredBlogs = useMemo(() => {
+    let result = blogs;
+
+    if (selectedCategory) {
+      result = result.filter(
+        (blog) => ((blog as any).category || "Other") === selectedCategory,
+      );
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(
+        (blog) =>
+          blog.title?.toLowerCase().includes(q) ||
+          blog.excerpt?.toLowerCase().includes(q) ||
+          blog.content?.toLowerCase().includes(q),
+      );
+    }
+
+    return result;
+  }, [blogs, searchQuery, selectedCategory]);
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory(null);
   };
 
   if (loading) {
@@ -188,7 +253,9 @@ export default function DashboardBlogsPage() {
                     theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  Create and manage your blog posts
+                  {blogs.length} total posts
+                  {(searchQuery || selectedCategory) &&
+                    ` \u2014 showing ${filteredBlogs.length}`}
                 </p>
               </div>
             </div>
@@ -205,6 +272,96 @@ export default function DashboardBlogsPage() {
             </div>
           </Link>
         </div>
+
+        {/* Search + Category Filters */}
+        {blogs.length > 0 && (
+          <div
+            className={`rounded-2xl border backdrop-blur-md p-5 space-y-4 ${
+              theme === "dark"
+                ? "bg-slate-800/50 border-purple-500/20"
+                : "bg-white/80 border-purple-200"
+            }`}
+          >
+            {/* Search bar */}
+            <div className="relative">
+              <Search
+                size={18}
+                className={`absolute left-4 top-1/2 -translate-y-1/2 ${
+                  theme === "dark" ? "text-gray-400" : "text-gray-500"
+                }`}
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title or content..."
+                className={`w-full pl-11 pr-10 py-3 rounded-xl border transition-colors ${
+                  theme === "dark"
+                    ? "bg-slate-900/50 border-purple-500/30 text-white placeholder-gray-500 focus:border-purple-500"
+                    : "bg-white border-purple-200 text-gray-900 placeholder-gray-400 focus:border-purple-400"
+                } focus:outline-none focus:ring-1 focus:ring-purple-500`}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 ${
+                    theme === "dark"
+                      ? "text-gray-400 hover:text-white"
+                      : "text-gray-400 hover:text-gray-700"
+                  }`}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Category pills */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === null
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30"
+                    : theme === "dark"
+                      ? "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                All ({blogs.length})
+              </button>
+              {CATEGORIES.filter((cat) => categoryCounts[cat]).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() =>
+                    setSelectedCategory(selectedCategory === cat ? null : cat)
+                  }
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === cat
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30"
+                      : theme === "dark"
+                        ? "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {cat} ({categoryCounts[cat]})
+                </button>
+              ))}
+              {(searchQuery || selectedCategory) && (
+                <button
+                  onClick={clearFilters}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all inline-flex items-center gap-1 ${
+                    theme === "dark"
+                      ? "text-red-400 hover:bg-red-500/10"
+                      : "text-red-600 hover:bg-red-50"
+                  }`}
+                >
+                  <X size={14} />
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {blogs.length === 0 ? (
           <div
@@ -238,6 +395,36 @@ export default function DashboardBlogsPage() {
               Create Your First Blog
             </Link>
           </div>
+        ) : filteredBlogs.length === 0 ? (
+          <div
+            className={`max-w-2xl mx-auto rounded-2xl border backdrop-blur-md p-8 text-center ${
+              theme === "dark"
+                ? "bg-slate-800/50 border-purple-500/20"
+                : "bg-white/80 border-purple-200"
+            }`}
+          >
+            <div className="w-20 h-20 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Search
+                className="text-purple-600 dark:text-purple-400"
+                size={32}
+              />
+            </div>
+            <h3 className="text-xl font-bold mb-2">No matching blogs</h3>
+            <p
+              className={`mb-6 ${
+                theme === "dark" ? "text-gray-300" : "text-gray-600"
+              }`}
+            >
+              Try a different search term or category.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all font-medium"
+            >
+              <X size={16} />
+              Clear filters
+            </button>
+          </div>
         ) : (
           <>
             {/* Desktop Table */}
@@ -261,7 +448,7 @@ export default function DashboardBlogsPage() {
                     <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px 6 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Created
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -273,7 +460,7 @@ export default function DashboardBlogsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {blogs.map((blog) => (
+                  {filteredBlogs.map((blog) => (
                     <tr
                       key={blog.id}
                       className={`hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors ${
@@ -347,7 +534,7 @@ export default function DashboardBlogsPage() {
 
             {/* Mobile Cards */}
             <div className="lg:hidden space-y-4">
-              {blogs.map((blog) => (
+              {filteredBlogs.map((blog) => (
                 <div
                   key={blog.id}
                   className={`rounded-2xl border backdrop-blur-md p-6 ${
