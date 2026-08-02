@@ -19,25 +19,36 @@ import {
   Sparkles,
   Search,
   X,
+  Layers,
+  Code2,
+  FileCode,
+  Server,
+  MonitorSmartphone,
+  Rocket,
+  Palette,
+  Database,
+  Terminal,
+  Briefcase,
 } from "lucide-react";
 
-// Same category list as the "Create New Blog" form's Category dropdown.
-// Keeping this as a single source of truth here means if you add a new
-// category to the create-blog form later, add it here too and the
-// filter row will show it automatically.
-const CATEGORIES = [
-  "JavaScript",
-  "TypeScript",
-  "Node.js",
-  "Express.js",
-  "React",
-  "Next.js",
-  "HTML/CSS",
-  "Database",
-  "DevOps",
-  "Career",
-  "Other",
-];
+// Same category set as the public /blogs page's "Browse by Category"
+// grid, so the admin side matches what visitors see. Each entry has an
+// icon + accent color so the cards look like the public page's category
+// tiles instead of plain filter pills.
+const CATEGORY_META: Record<string, { icon: typeof Code2; color: string }> = {
+  JavaScript: { icon: Code2, color: "from-orange-500 to-amber-500" },
+  TypeScript: { icon: FileCode, color: "from-blue-500 to-sky-500" },
+  "Node.js": { icon: Server, color: "from-green-500 to-emerald-500" },
+  "Express.js": { icon: Server, color: "from-slate-500 to-slate-600" },
+  React: { icon: MonitorSmartphone, color: "from-cyan-500 to-blue-500" },
+  "Next.js": { icon: Rocket, color: "from-gray-700 to-gray-900" },
+  "HTML/CSS": { icon: Palette, color: "from-orange-500 to-red-500" },
+  Database: { icon: Database, color: "from-indigo-500 to-purple-500" },
+  DevOps: { icon: Terminal, color: "from-teal-500 to-green-600" },
+  Career: { icon: Briefcase, color: "from-pink-500 to-rose-500" },
+  Other: { icon: Layers, color: "from-gray-500 to-gray-600" },
+};
+const CATEGORY_ORDER = Object.keys(CATEGORY_META);
 
 export default function DashboardBlogsPage() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -152,9 +163,6 @@ export default function DashboardBlogsPage() {
     }
   };
 
-  // How many blogs fall into each category — shown as a small count badge
-  // on each filter pill so you can see at a glance where most of your
-  // 45+ posts actually live before you even click anything.
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const blog of blogs) {
@@ -164,35 +172,35 @@ export default function DashboardBlogsPage() {
     return counts;
   }, [blogs]);
 
-  // Search matches title, excerpt, and content (so you can find a post
-  // even if you only remember a phrase from inside it, not the title).
-  // Category filter is applied on top of the search filter.
+  // Category filter narrows the pool FIRST, then search narrows further
+  // within that category — exactly the flow requested: click a category,
+  // THEN search inside it if that category still has a lot of posts.
+  const categoryFilteredBlogs = useMemo(() => {
+    if (!selectedCategory) return blogs;
+    return blogs.filter(
+      (blog) => ((blog as any).category || "Other") === selectedCategory,
+    );
+  }, [blogs, selectedCategory]);
+
   const filteredBlogs = useMemo(() => {
-    let result = blogs;
-
-    if (selectedCategory) {
-      result = result.filter(
-        (blog) => ((blog as any).category || "Other") === selectedCategory,
-      );
-    }
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      result = result.filter(
-        (blog) =>
-          blog.title?.toLowerCase().includes(q) ||
-          blog.excerpt?.toLowerCase().includes(q) ||
-          blog.content?.toLowerCase().includes(q),
-      );
-    }
-
-    return result;
-  }, [blogs, searchQuery, selectedCategory]);
+    if (!searchQuery.trim()) return categoryFilteredBlogs;
+    const q = searchQuery.trim().toLowerCase();
+    return categoryFilteredBlogs.filter(
+      (blog) =>
+        blog.title?.toLowerCase().includes(q) ||
+        blog.excerpt?.toLowerCase().includes(q) ||
+        blog.content?.toLowerCase().includes(q),
+    );
+  }, [categoryFilteredBlogs, searchQuery]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory(null);
   };
+
+  const sectionHeading = selectedCategory
+    ? `${selectedCategory} Posts`
+    : "All Posts";
 
   if (loading) {
     return (
@@ -253,9 +261,7 @@ export default function DashboardBlogsPage() {
                     theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  {blogs.length} total posts
-                  {(searchQuery || selectedCategory) &&
-                    ` \u2014 showing ${filteredBlogs.length}`}
+                  Create and manage your blog posts
                 </p>
               </div>
             </div>
@@ -273,15 +279,8 @@ export default function DashboardBlogsPage() {
           </Link>
         </div>
 
-        {/* Search + Category Filters */}
         {blogs.length > 0 && (
-          <div
-            className={`rounded-2xl border backdrop-blur-md p-5 space-y-4 ${
-              theme === "dark"
-                ? "bg-slate-800/50 border-purple-500/20"
-                : "bg-white/80 border-purple-200"
-            }`}
-          >
+          <>
             {/* Search bar */}
             <div className="relative">
               <Search
@@ -294,12 +293,16 @@ export default function DashboardBlogsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by title or content..."
-                className={`w-full pl-11 pr-10 py-3 rounded-xl border transition-colors ${
+                placeholder={
+                  selectedCategory
+                    ? `Search within ${selectedCategory}...`
+                    : "Search blogs by title, tags, or content..."
+                }
+                className={`w-full pl-11 pr-10 py-3.5 rounded-xl border transition-colors ${
                   theme === "dark"
-                    ? "bg-slate-900/50 border-purple-500/30 text-white placeholder-gray-500 focus:border-purple-500"
-                    : "bg-white border-purple-200 text-gray-900 placeholder-gray-400 focus:border-purple-400"
-                } focus:outline-none focus:ring-1 focus:ring-purple-500`}
+                    ? "bg-slate-800/50 border-purple-500/30 text-white placeholder-gray-500 focus:border-purple-500"
+                    : "bg-white/80 border-purple-200 text-gray-900 placeholder-gray-400 focus:border-purple-400"
+                } focus:outline-none focus:ring-1 focus:ring-purple-500 backdrop-blur-md`}
               />
               {searchQuery && (
                 <button
@@ -315,52 +318,153 @@ export default function DashboardBlogsPage() {
               )}
             </div>
 
-            {/* Category pills */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === null
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30"
-                    : theme === "dark"
-                      ? "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                All ({blogs.length})
-              </button>
-              {CATEGORIES.filter((cat) => categoryCounts[cat]).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() =>
-                    setSelectedCategory(selectedCategory === cat ? null : cat)
-                  }
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    selectedCategory === cat
-                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30"
-                      : theme === "dark"
-                        ? "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            {/* Browse by Category — card grid, mirrors the public /blogs page */}
+            <div
+              className={`rounded-2xl border backdrop-blur-md p-6 ${
+                theme === "dark"
+                  ? "bg-slate-800/50 border-purple-500/20"
+                  : "bg-white/80 border-purple-200"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Layers
+                    size={18}
+                    className="text-purple-500 dark:text-purple-400"
+                  />
+                  <h2
+                    className={`font-semibold ${
+                      theme === "dark" ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    Browse by Category
+                  </h2>
+                </div>
+                <span
+                  className={`text-sm ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-500"
                   }`}
                 >
-                  {cat} ({categoryCounts[cat]})
+                  {filteredBlogs.length} blogs
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {/* All Blogs card */}
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    selectedCategory === null
+                      ? "border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10"
+                      : theme === "dark"
+                        ? "border-transparent bg-slate-700/30 hover:border-purple-500/30"
+                        : "border-transparent bg-gray-50 hover:border-purple-300"
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center mb-2">
+                    <Layers size={16} className="text-white" />
+                  </div>
+                  <p
+                    className={`text-sm font-semibold ${
+                      theme === "dark" ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    All Blogs
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    {blogs.length} blogs
+                  </p>
                 </button>
-              ))}
+
+                {CATEGORY_ORDER.map((cat) => {
+                  const meta = CATEGORY_META[cat];
+                  const Icon = meta.icon;
+                  const count = categoryCounts[cat] || 0;
+                  const isSelected = selectedCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() =>
+                        setSelectedCategory(isSelected ? null : cat)
+                      }
+                      disabled={count === 0}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        count === 0
+                          ? "opacity-40 cursor-not-allowed border-transparent"
+                          : isSelected
+                            ? "border-purple-500 bg-gradient-to-br from-purple-500/10 to-pink-500/10"
+                            : theme === "dark"
+                              ? "border-transparent bg-slate-700/30 hover:border-purple-500/30"
+                              : "border-transparent bg-gray-50 hover:border-purple-300"
+                      }`}
+                    >
+                      <div
+                        className={`w-9 h-9 rounded-lg bg-gradient-to-br ${meta.color} flex items-center justify-center mb-2`}
+                      >
+                        <Icon size={16} className="text-white" />
+                      </div>
+                      <p
+                        className={`text-sm font-semibold ${
+                          theme === "dark" ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {cat}
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        {count} {count === 1 ? "blog" : "blogs"}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Results heading + clear filters, same pattern as public page */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2
+                  className={`text-xl font-bold ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {sectionHeading}
+                </h2>
+                <p
+                  className={`text-sm ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Showing {filteredBlogs.length} of{" "}
+                  {selectedCategory
+                    ? categoryFilteredBlogs.length
+                    : blogs.length}{" "}
+                  post{filteredBlogs.length === 1 ? "" : "s"}
+                  {searchQuery && ` for "${searchQuery}"`}
+                </p>
+              </div>
               {(searchQuery || selectedCategory) && (
                 <button
                   onClick={clearFilters}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all inline-flex items-center gap-1 ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     theme === "dark"
-                      ? "text-red-400 hover:bg-red-500/10"
-                      : "text-red-600 hover:bg-red-50"
+                      ? "bg-slate-700/50 text-gray-300 hover:bg-slate-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   <X size={14} />
-                  Clear filters
+                  Clear Filters
                 </button>
               )}
             </div>
-          </div>
+          </>
         )}
 
         {blogs.length === 0 ? (
