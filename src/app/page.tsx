@@ -125,18 +125,18 @@ const journey: JourneyItem[] = [
       "Decided to transition into tech to pursue long-term passion for software",
     ],
     tags: [],
-    badge: "10+ yrs of engineering problem-solving carried into code",
+    badge: "Engineering problem-solving skills carried into code",
   },
   {
     type: "work",
     title: "Web Development (Level 1)",
     org: "Programming Hero",
-    duration: "2023 - 2024",
+    duration: "2024",
     location: "Remote",
     description:
       "Foundation of web development, focusing on building responsive and interactive user interfaces.",
     achievements: [
-      "Built over 10+ frontend projects using React and modern JavaScript",
+      "Built over 5+ frontend projects using React and modern JavaScript",
       "Developed a strong understanding of DOM manipulation and CSS frameworks",
       "Successfully integrated MongoDB for persistent data storage",
     ],
@@ -146,7 +146,7 @@ const journey: JourneyItem[] = [
     type: "work",
     title: "Full Stack Development (Level 2)",
     org: "Programming Hero",
-    duration: "2024 - Present",
+    duration: "2025",
     location: "Remote",
     description:
       "Deep diving into advanced Full Stack development with a focus on professional workflow and scalability.",
@@ -156,21 +156,20 @@ const journey: JourneyItem[] = [
       "Building production-grade applications with Next.js and Tailwind CSS",
     ],
     tags: ["Next.js", "TypeScript", "Prisma", "PostgreSQL", "Redux"],
-    badge: "Mastered Next.js 15+ (Server Components, Server Actions)",
+    badge: "Mastered Next.js (Server Components, Server Actions)",
   },
   {
     type: "education",
     title: "Professional Web Development — Certificate",
     org: "Programming Hero",
-    duration: "2023 - 2025",
+    duration: "2024 - 2025",
     description:
-      "Two years dedicated to becoming a production-ready MERN & Next.js developer.",
+      "1 year dedicated to becoming a production-ready MERN & Next.js developer.",
     achievements: [
       "Successfully mastered MERN & Next.js stack through rigorous training",
-      "Dedicated 2+ years to becoming a production-ready developer",
     ],
     tags: [],
-    badge: "Completed 6-month intensive training, 10+ full-scale apps built",
+    badge: "Completed 1 year intensive training, full-scale apps built",
   },
 ];
 
@@ -582,10 +581,10 @@ const PortfolioHome = () => {
             <p
               className={`text-xl leading-relaxed ${dark ? "text-gray-300" : "text-gray-600"}`}
             >
-              I specialize in developing modern web applications using the MERN
-              stack and Next.js, focusing on clean architecture, robust backend
-              systems, and intuitive frontend experiences that solve real-world
-              problems.
+              I specialize in developing modern web applications using Next.js,
+              TypeScript, Prisma, and PostgreSQL, focusing on clean
+              architecture, robust backend systems, and intuitive frontend
+              experiences that solve real-world problems.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -660,7 +659,7 @@ const PortfolioHome = () => {
                   color: dark ? "bg-pink-500/20" : "bg-pink-100",
                   iconColor: "text-pink-400",
                   label: "Experience",
-                  value: "2+ Years",
+                  value: "3 Years",
                 },
                 {
                   icon: Award,
@@ -758,7 +757,7 @@ const PortfolioHome = () => {
               <p>
                 My programming journey began over{" "}
                 <span className="text-purple-400 font-semibold">
-                  two years ago,
+                  3 years ago,
                 </span>{" "}
                 and since then I have continuously worked on mastering the
                 modern web ecosystem, prioritizing clean, efficient,
