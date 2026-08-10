@@ -34,6 +34,8 @@ export const metadata: Metadata = {
     images: ["https://sahajewelkumar.vercel.app/og-image.png"],
   },
 };
+
+export const revalidate = 10;
 export default async function ProjectsPage() {
   const res = await projectAPI.getAll();
   const projects: Project[] = res.data.data || res.data || [];
