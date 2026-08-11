@@ -294,7 +294,7 @@ export default function LoginForm() {
               theme === "dark" ? "text-gray-500" : "text-gray-400"
             }`}
           >
-            © 2025 Saha Jewel Kumar. All rights reserved.
+            © 2026 Saha Jewel Kumar. All rights reserved.
           </p>
         </div>
       </div>

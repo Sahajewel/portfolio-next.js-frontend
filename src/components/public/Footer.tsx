@@ -134,7 +134,7 @@ const Footer = ({ onScrollToSection }: FooterProps) => {
               : "border-purple-200 text-gray-600"
           }`}
         >
-          <p>© 2025 saha jewel kumar. All rights reserved.</p>
+          <p>© 2026 saha jewel kumar. All rights reserved.</p>
         </div>
       </div>
     </footer>
