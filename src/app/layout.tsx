@@ -10,6 +10,7 @@ import { Toaster } from "react-hot-toast";
 import SessionProvider from "@/components/public/SessionProvider";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { ThemeProvider } from "next-themes";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 // display: "swap" prevents invisible-text flash while font loads (small FOUT fix)
 const inter = Inter({ subsets: ["latin"], display: "swap" });
@@ -102,25 +103,27 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* refetchOnWindowFocus/refetchInterval off: next-auth's default
-              SessionProvider polls + refetches on every tab focus, which
-              re-renders your whole tree (including the portfolio page)
-              every time the user tabs back in. Not needed for a public
-              portfolio site. */}
-          <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
-            <LayoutWrapper>{children}</LayoutWrapper>
+          <LanguageProvider>
+            {/* refetchOnWindowFocus/refetchInterval off: next-auth's default
+                SessionProvider polls + refetches on every tab focus, which
+                re-renders your whole tree (including the portfolio page)
+                every time the user tabs back in. Not needed for a public
+                portfolio site. */}
+            <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
+              <LayoutWrapper>{children}</LayoutWrapper>
 
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: "#363636",
-                  color: "#ffffff",
-                },
-              }}
-            />
-          </SessionProvider>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: "#363636",
+                    color: "#ffffff",
+                  },
+                }}
+              />
+            </SessionProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

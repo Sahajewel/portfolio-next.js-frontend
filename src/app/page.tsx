@@ -40,6 +40,8 @@ import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
+import LanguageToggle from "@/components/LanguageToggle";
 
 /* ────────────────────────────────────────────────────────────────────────
    TRIMMED STRUCTURE — 6 sections instead of 10:
@@ -108,6 +110,138 @@ const skills: Skill[] = [
   { name: "Prisma ORM", level: "Advanced", category: "Backend", icon: "🔷" },
   { name: "Tailwind CSS", level: "Expert", category: "Frontend", icon: "🎨" },
   { name: "MongoDB", level: "Intermediate", category: "Database", icon: "🍃" },
+];
+
+// ─── Bilingual text (EN / JP) for the recruiter-facing sections ──────────
+const T = {
+  en: {
+    heroTag: "Exploring New Frontiers",
+    heroHiIm: "Hi, I'm",
+    heroTitle:
+      "Full Stack Developer | Building Scalable, High-Performance Web Applications",
+    heroDesc:
+      "I specialize in developing modern web applications using Next.js, TypeScript, Prisma, and PostgreSQL, focusing on clean architecture, robust backend systems, and intuitive frontend experiences that solve real-world problems.",
+    downloadResume: "Download Resume",
+    letsTalk: "Let's Talk",
+    aboutTitle: "About Me",
+    aboutSub: "Get to know me better",
+    aboutIntro:
+      "👋 Hello! I'm a dedicated Full Stack Developer with a strong focus on building scalable, high-performance web applications and solving real-world problems.",
+    aboutP2Pre: "My programming journey began over",
+    aboutP2Years: "3 years ago,",
+    aboutP2Post:
+      "and since then I have continuously worked on mastering the modern web ecosystem, prioritizing clean, efficient, maintainable code.",
+    aboutP3Pre: "I specialize in the",
+    aboutP3Stack: "MERN stack and Next.js",
+    aboutP3Post:
+      "working with TypeScript, Prisma, and PostgreSQL to design robust backend systems and intuitive interfaces.",
+    aboutQuote:
+      '💡 "Code is like humor. When you have to explain it, it\'s bad." - Cory House',
+    skillsTitle: "Skills & Expertise",
+    skillsSub: "Technologies I work with",
+    journeyTitle: "My Journey",
+    journeySub:
+      "From engineering to full stack — education, work, and milestones in one timeline",
+    projectsTitle: "Featured Projects",
+    projectsSub: "Some of my recent work",
+    contactTitle: "Let's Work Together",
+    contactSub:
+      "Have a project in mind or just want to chat? I'm always open to discussing new opportunities, creative ideas, or partnerships. Let's bring your vision to life!",
+    sendMessage: "Send Me a Message",
+  },
+  jp: {
+    heroTag: "新たな挑戦を探求中",
+    heroHiIm: "はじめまして、",
+    heroTitle:
+      "フルスタックデベロッパー ｜ スケーラブルで高性能なWebアプリケーションを構築",
+    heroDesc:
+      "Next.js、TypeScript、Prisma、PostgreSQLを用いたモダンなWebアプリケーション開発を専門としています。クリーンなアーキテクチャ、堅牢なバックエンドシステム、そして実際の課題を解決する直感的なフロントエンド体験の構築を重視しています。",
+    downloadResume: "履歴書をダウンロード",
+    letsTalk: "お話ししましょう",
+    aboutTitle: "自己紹介",
+    aboutSub: "私についてもっと知る",
+    aboutIntro:
+      "👋 こんにちは！スケーラブルで高性能なWebアプリケーションの構築と、実際の課題解決に強くこだわるフルスタックデベロッパーです。",
+    aboutP2Pre: "プログラミングの旅を始めたのは",
+    aboutP2Years: "3年以上前、",
+    aboutP2Post:
+      "それ以来、クリーンで効率的、保守しやすいコードを重視しながら、モダンなWebエコシステムの習得に継続的に取り組んでいます。",
+    aboutP3Pre: "専門としているのは",
+    aboutP3Stack: "MERNスタックとNext.js",
+    aboutP3Post:
+      "で、TypeScript、Prisma、PostgreSQLを用いて堅牢なバックエンドシステムと直感的なインターフェースを設計しています。",
+    aboutQuote:
+      "💡「コードはユーモアのようなもの。説明しなければ伝わらないなら、それは良くないコードだ。」- コリー・ハウス",
+    skillsTitle: "スキル＆専門技術",
+    skillsSub: "使用している技術",
+    journeyTitle: "私の歩み",
+    journeySub:
+      "エンジニアリングからフルスタックへ — 学歴・職歴・節目を一つのタイムラインで",
+    projectsTitle: "主なプロジェクト",
+    projectsSub: "最近の制作物の一部",
+    contactTitle: "一緒に働きましょう",
+    contactSub:
+      "プロジェクトのご相談やちょっとした会話でも、お気軽にご連絡ください。新しい機会やアイデア、コラボレーションについて、いつでも話し合う準備ができています。あなたのビジョンを一緒に形にしましょう！",
+    sendMessage: "メッセージを送る",
+  },
+} as const;
+
+const journeyJP: Record<
+  string,
+  { description: string; achievements: string[]; badge?: string }
+> = {
+  "B.Sc. in Civil Engineering": {
+    description:
+      "ソフトウェア開発へ転向する前に、構造的な論理思考とプロジェクト管理の強固な基盤を築きました。",
+    achievements: [
+      "構造的な論理思考とプロジェクト管理における豊富な経験",
+      "ソフトウェアへの長年の情熱を追求するため、技術分野への転向を決意",
+    ],
+    badge: "エンジニアリングで培った問題解決力をコーディングにも応用",
+  },
+  "Web Development (Level 1)": {
+    description:
+      "レスポンシブでインタラクティブなユーザーインターフェースの構築に重点を置いた、Web開発の基礎を習得。",
+    achievements: [
+      "ReactとモダンなJavaScriptを用いて5件以上のフロントエンドプロジェクトを構築",
+      "DOM操作とCSSフレームワークに関する深い理解を習得",
+      "永続的なデータ保存のためMongoDBを統合",
+    ],
+  },
+  "Full Stack Development (Level 2)": {
+    description:
+      "プロフェッショナルなワークフローとスケーラビリティに重点を置き、高度なフルスタック開発を深く学習。",
+    achievements: [
+      "型安全で堅牢なアプリケーション構築のためTypeScriptを習得",
+      "PrismaとPostgreSQLを用いた高度な状態管理と複雑なバックエンドアーキテクチャを実装",
+      "Next.jsとTailwind CSSを用いた本番環境レベルのアプリケーションを構築",
+    ],
+    badge: "Next.js（Server Components、Server Actions）を習得",
+  },
+  "Professional Web Development — Certificate": {
+    description:
+      "本番運用可能なレベルのMERN＆Next.js開発者になるべく、1年間集中的に取り組みました。",
+    achievements: ["厳格なトレーニングを通じてMERN＆Next.jsスタックを習得"],
+    badge: "1年間の集中トレーニングを修了、実用規模のアプリを構築",
+  },
+};
+
+const philosophyStripJP = [
+  {
+    icon: "🎯",
+    title: "精密なエンジニアリング",
+    text: "土木工学で培った構造的な厳密さを、今はコードに応用しています。",
+  },
+  {
+    icon: "📈",
+    title: "継続的な成長",
+    text: "2年間、毎日何か新しいことを学び続けています。",
+  },
+  {
+    icon: "🧩",
+    title: "問題解決者",
+    text: "単なるコードではなく、解決策を作る — 標準でスケーラブルかつ効率的に。",
+  },
 ];
 
 // One chronological timeline — education, work, and the old "achievements"
@@ -234,6 +368,8 @@ const BlogCardSkeleton = () => (
 
 const PortfolioHome = () => {
   const { theme, setTheme } = useTheme();
+  const { lang } = useLanguage();
+  const t = T[lang];
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
@@ -438,6 +574,8 @@ const PortfolioHome = () => {
                 </Link>
               )}
 
+              <LanguageToggle dark={dark} />
+
               <button
                 onClick={toggleTheme}
                 className="ml-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
@@ -451,6 +589,8 @@ const PortfolioHome = () => {
             </div>
 
             <div className="flex items-center gap-2 xl:hidden">
+              <LanguageToggle dark={dark} />
+
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
@@ -554,14 +694,14 @@ const PortfolioHome = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500" />
               </span>
-              Exploring New Frontiers
+              {t.heroTag}
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">
               <span
                 className={`block mb-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
               >
-                Hi, I'm
+                {t.heroHiIm}
               </span>
               <span className="block bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
                 Saha Jewel Kumar
@@ -573,18 +713,14 @@ const PortfolioHome = () => {
               <h2
                 className={`text-3xl md:text-4xl font-semibold ${dark ? "text-gray-300" : "text-gray-700"}`}
               >
-                Full Stack Developer | Building Scalable, High-Performance Web
-                Applications
+                {t.heroTitle}
               </h2>
             </div>
 
             <p
               className={`text-xl leading-relaxed ${dark ? "text-gray-300" : "text-gray-600"}`}
             >
-              I specialize in developing modern web applications using Next.js,
-              TypeScript, Prisma, and PostgreSQL, focusing on clean
-              architecture, robust backend systems, and intuitive frontend
-              experiences that solve real-world problems.
+              {t.heroDesc}
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -596,7 +732,7 @@ const PortfolioHome = () => {
               >
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
-                  Download Resume
+                  {t.downloadResume}
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
@@ -607,7 +743,7 @@ const PortfolioHome = () => {
                 onClick={() => scrollToSection("contact")}
                 className={`px-8 py-4 border-2 border-purple-500 rounded-full font-semibold transition-all backdrop-blur-sm flex items-center gap-2 ${dark ? "hover:bg-purple-500/20 text-white" : "hover:bg-purple-50 text-purple-600"}`}
               >
-                <MessageSquare size={20} /> Let's Talk
+                <MessageSquare size={20} /> {t.letsTalk}
               </button>
             </div>
 
@@ -737,11 +873,11 @@ const PortfolioHome = () => {
           <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                About Me
+                {t.aboutTitle}
               </span>
             </h2>
             <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              Get to know me better
+              {t.aboutSub}
             </p>
           </div>
 
@@ -749,32 +885,22 @@ const PortfolioHome = () => {
             <div
               className={`space-y-6 text-lg leading-relaxed ${dark ? "text-gray-300" : "text-gray-700"}`}
             >
-              <p className="text-xl font-semibold">
-                👋 Hello! I'm a dedicated Full Stack Developer with a strong
-                focus on building scalable, high-performance web applications
-                and solving real-world problems.
-              </p>
+              <p className="text-xl font-semibold">{t.aboutIntro}</p>
               <p>
-                My programming journey began over{" "}
+                {t.aboutP2Pre}{" "}
                 <span className="text-purple-400 font-semibold">
-                  3 years ago,
+                  {t.aboutP2Years}
                 </span>{" "}
-                and since then I have continuously worked on mastering the
-                modern web ecosystem, prioritizing clean, efficient,
-                maintainable code.
+                {t.aboutP2Post}
               </p>
               <p>
-                I specialize in the{" "}
+                {t.aboutP3Pre}{" "}
                 <span className="text-pink-400 font-semibold">
-                  MERN stack and Next.js
+                  {t.aboutP3Stack}
                 </span>{" "}
-                working with TypeScript, Prisma, and PostgreSQL to design robust
-                backend systems and intuitive interfaces.
+                {t.aboutP3Post}
               </p>
-              <p className="text-purple-400 italic">
-                💡 "Code is like humor. When you have to explain it, it's bad."
-                - Cory House
-              </p>
+              <p className="text-purple-400 italic">{t.aboutQuote}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -826,22 +952,24 @@ const PortfolioHome = () => {
 
           {/* Philosophy — folded in as a compact strip, no longer its own section */}
           <div className="grid md:grid-cols-3 gap-4">
-            {philosophyStrip.map((item, index) => (
-              <div
-                key={index}
-                className={`flex items-start gap-3 p-4 rounded-xl border ${dark ? "bg-slate-800/30 border-purple-500/10" : "bg-white/40 border-purple-100"}`}
-              >
-                <span className="text-2xl">{item.icon}</span>
-                <div>
-                  <h4 className="font-semibold text-sm">{item.title}</h4>
-                  <p
-                    className={`text-xs mt-0.5 ${dark ? "text-gray-400" : "text-gray-600"}`}
-                  >
-                    {item.text}
-                  </p>
+            {(lang === "jp" ? philosophyStripJP : philosophyStrip).map(
+              (item, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-3 p-4 rounded-xl border ${dark ? "bg-slate-800/30 border-purple-500/10" : "bg-white/40 border-purple-100"}`}
+                >
+                  <span className="text-2xl">{item.icon}</span>
+                  <div>
+                    <h4 className="font-semibold text-sm">{item.title}</h4>
+                    <p
+                      className={`text-xs mt-0.5 ${dark ? "text-gray-400" : "text-gray-600"}`}
+                    >
+                      {item.text}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         </div>
       </section>
@@ -855,11 +983,11 @@ const PortfolioHome = () => {
           <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Skills & Expertise
+                {t.skillsTitle}
               </span>
             </h2>
             <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              Technologies I work with
+              {t.skillsSub}
             </p>
           </div>
 
@@ -974,12 +1102,11 @@ const PortfolioHome = () => {
           <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                My Journey
+                {t.journeyTitle}
               </span>
             </h2>
             <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              From engineering to full stack — education, work, and milestones
-              in one timeline
+              {t.journeySub}
             </p>
           </div>
 
@@ -1033,19 +1160,29 @@ const PortfolioHome = () => {
                       <p
                         className={`mb-4 leading-relaxed ${dark ? "text-gray-300" : "text-gray-700"}`}
                       >
-                        {item.description}
+                        {lang === "jp"
+                          ? (journeyJP[item.title]?.description ??
+                            item.description)
+                          : item.description}
                       </p>
 
                       {item.badge && (
                         <div
                           className={`inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full text-xs font-semibold ${dark ? "bg-yellow-500/10 text-yellow-300 border border-yellow-500/20" : "bg-yellow-50 text-yellow-700 border border-yellow-200"}`}
                         >
-                          <Trophy size={12} /> {item.badge}
+                          <Trophy size={12} />{" "}
+                          {lang === "jp"
+                            ? (journeyJP[item.title]?.badge ?? item.badge)
+                            : item.badge}
                         </div>
                       )}
 
                       <ul className="space-y-1 mb-4">
-                        {item.achievements.map((a, i) => (
+                        {(lang === "jp"
+                          ? (journeyJP[item.title]?.achievements ??
+                            item.achievements)
+                          : item.achievements
+                        ).map((a, i) => (
                           <li
                             key={i}
                             className={`flex items-start gap-2 text-sm ${dark ? "text-gray-300" : "text-gray-600"}`}
@@ -1086,11 +1223,11 @@ const PortfolioHome = () => {
           <div className="text-center mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Featured Projects
+                {t.projectsTitle}
               </span>
             </h2>
             <p className={dark ? "text-gray-300" : "text-gray-600"}>
-              Some of my recent work
+              {t.projectsSub}
             </p>
           </div>
 
@@ -1369,15 +1506,13 @@ const PortfolioHome = () => {
           <div className="mb-12">
             <h2 className="text-5xl md:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                Let's Work Together
+                {t.contactTitle}
               </span>
             </h2>
             <p
               className={`text-xl leading-relaxed max-w-2xl mx-auto ${dark ? "text-gray-300" : "text-gray-600"}`}
             >
-              Have a project in mind or just want to chat? I'm always open to
-              discussing new opportunities, creative ideas, or partnerships.
-              Let's bring your vision to life!
+              {t.contactSub}
             </p>
           </div>
 
@@ -1432,7 +1567,7 @@ const PortfolioHome = () => {
           <div
             className={`p-8 rounded-2xl border ${dark ? "bg-slate-800/50 backdrop-blur-sm border-purple-500/20" : "bg-white/50 backdrop-blur-sm border-purple-200"}`}
           >
-            <h3 className="text-2xl font-bold mb-6">Send Me a Message</h3>
+            <h3 className="text-2xl font-bold mb-6">{t.sendMessage}</h3>
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <input
