@@ -148,6 +148,60 @@ const T = {
     contactSub:
       "Have a project in mind or just want to chat? I'm always open to discussing new opportunities, creative ideas, or partnerships. Let's bring your vision to life!",
     sendMessage: "Send Me a Message",
+    // Nav
+    navHome: "Home",
+    navAbout: "About",
+    navSkills: "Skills",
+    navJourney: "Journey",
+    navProjects: "Projects",
+    navBlogs: "Blogs",
+    navContact: "Contact",
+    navDashboard: "Dashboard",
+    navLogout: "Logout",
+    navLogin: "Login",
+    // Hero stats
+    statStackFocus: "Stack Focus",
+    statStackFocusValue:
+      "MERN Stack • Next.js • TypeScript • Prisma • PostgreSQL",
+    statExperience: "Experience",
+    statExperienceValue: "3 Years",
+    statProjects: "Projects",
+    statProjectsValue: "10+ Completed",
+    // About mini cards
+    cardCleanCodeTitle: "Clean Code",
+    cardCleanCodeDesc: "Writing maintainable and scalable code",
+    cardProblemSolverTitle: "Problem Solver",
+    cardProblemSolverDesc: "Analytical thinking for complex challenges",
+    cardFastLearnerTitle: "Fast Learner",
+    cardFastLearnerDesc: "Swiftly mastering new frameworks and tools",
+    cardTeamTitle: "Team Enthusiast",
+    cardTeamDesc: "Collaborative and communicative",
+    // Skills categories
+    catFrontend: "Frontend",
+    catBackend: "Backend",
+    catDevOps: "DevOps & Tools",
+    // View all buttons
+    viewAllProjects: "View All Projects",
+    viewAllBlogs: "View All Blogs",
+    // Contact cards
+    contactEmail: "Email",
+    contactPhone: "Phone",
+    contactLinkedInTitle: "LinkedIn",
+    contactLinkedInValue: "Connect with me",
+    // Form
+    formName: "Your Name",
+    formEmail: "Your Email",
+    formSubject: "Subject",
+    formMessage: "Your Message",
+    formSend: "Send Message",
+    formSending: "Sending....",
+    formError: "Something went wrong, please try again.",
+    // Footer
+    footerTagline:
+      "Building exceptional digital experiences with passion and precision.",
+    footerQuickLinks: "Quick Links",
+    footerConnect: "Connect",
+    footerRights: "© 2026 Saha Jewel Kumar. All rights reserved.",
   },
   jp: {
     heroTag: "新たな挑戦を探求中",
@@ -183,6 +237,59 @@ const T = {
     contactSub:
       "プロジェクトのご相談やちょっとした会話でも、お気軽にご連絡ください。新しい機会やアイデア、コラボレーションについて、いつでも話し合う準備ができています。あなたのビジョンを一緒に形にしましょう！",
     sendMessage: "メッセージを送る",
+    // Nav
+    navHome: "ホーム",
+    navAbout: "自己紹介",
+    navSkills: "スキル",
+    navJourney: "経歴",
+    navProjects: "プロジェクト",
+    navBlogs: "ブログ",
+    navContact: "お問い合わせ",
+    navDashboard: "ダッシュボード",
+    navLogout: "ログアウト",
+    navLogin: "ログイン",
+    // Hero stats
+    statStackFocus: "得意技術",
+    statStackFocusValue:
+      "MERNスタック・Next.js・TypeScript・Prisma・PostgreSQL",
+    statExperience: "経験年数",
+    statExperienceValue: "3年",
+    statProjects: "プロジェクト数",
+    statProjectsValue: "10件以上完成",
+    // About mini cards
+    cardCleanCodeTitle: "クリーンコード",
+    cardCleanCodeDesc: "保守しやすくスケーラブルなコードを書く",
+    cardProblemSolverTitle: "問題解決力",
+    cardProblemSolverDesc: "複雑な課題への分析的思考",
+    cardFastLearnerTitle: "速い学習力",
+    cardFastLearnerDesc: "新しいフレームワークやツールを素早く習得",
+    cardTeamTitle: "チーム志向",
+    cardTeamDesc: "協調性があり、コミュニケーション力が高い",
+    // Skills categories
+    catFrontend: "フロントエンド",
+    catBackend: "バックエンド",
+    catDevOps: "DevOps・ツール",
+    // View all buttons
+    viewAllProjects: "すべてのプロジェクトを見る",
+    viewAllBlogs: "すべてのブログを見る",
+    // Contact cards
+    contactEmail: "メール",
+    contactPhone: "電話番号",
+    contactLinkedInTitle: "LinkedIn",
+    contactLinkedInValue: "つながりましょう",
+    // Form
+    formName: "お名前",
+    formEmail: "メールアドレス",
+    formSubject: "件名",
+    formMessage: "メッセージ",
+    formSend: "メッセージを送る",
+    formSending: "送信中...",
+    formError: "エラーが発生しました。もう一度お試しください。",
+    // Footer
+    footerTagline: "情熱と精密さで、優れたデジタル体験を構築します。",
+    footerQuickLinks: "クイックリンク",
+    footerConnect: "つながる",
+    footerRights: "© 2026 サハ ジュエルクマル．All rights reserved.",
   },
 } as const;
 
@@ -370,6 +477,18 @@ const PortfolioHome = () => {
   const { theme, setTheme } = useTheme();
   const { lang } = useLanguage();
   const t = T[lang];
+  const navLabel = (name: string) => {
+    const map: Record<string, string> = {
+      home: t.navHome,
+      about: t.navAbout,
+      skills: t.navSkills,
+      journey: t.navJourney,
+      projects: t.navProjects,
+      blogs: t.navBlogs,
+      contact: t.navContact,
+    };
+    return map[name] ?? name.charAt(0).toUpperCase() + name.slice(1);
+  };
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
@@ -466,7 +585,7 @@ const PortfolioHome = () => {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setResult("Sending....");
+    setResult(t.formSending);
     const formData = new FormData(event.currentTarget);
     formData.append(
       "access_key",
@@ -479,13 +598,17 @@ const PortfolioHome = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setResult("Message Sent Successfully! ✅");
+        setResult(
+          lang === "jp"
+            ? "メッセージを送信しました！✅"
+            : "Message Sent Successfully! ✅",
+        );
         (event.target as HTMLFormElement).reset();
       } else {
         setResult(data.message);
       }
     } catch {
-      setResult("Something went wrong, please try again.");
+      setResult(t.formError);
     }
   };
 
@@ -532,7 +655,7 @@ const PortfolioHome = () => {
                     onClick={() => scrollToSection(item.name)}
                     className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${activeSection === item.name ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/50" : dark ? "text-gray-200 hover:text-white hover:bg-white/10" : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"}`}
                   >
-                    {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                    {navLabel(item.name)}
                   </button>
                 ) : (
                   <Link
@@ -541,7 +664,7 @@ const PortfolioHome = () => {
                     prefetch={true}
                     className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${dark ? "text-gray-200 hover:text-white hover:bg-white/10" : "text-gray-800 hover:text-purple-600 hover:bg-purple-50"}`}
                   >
-                    {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                    {navLabel(item.name)}
                   </Link>
                 ),
               )}
@@ -555,13 +678,13 @@ const PortfolioHome = () => {
                     prefetch={true}
                     className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2"
                   >
-                    <LayoutDashboard size={16} /> Dashboard
+                    <LayoutDashboard size={16} /> {t.navDashboard}
                   </Link>
                   <button
                     onClick={() => signOut()}
                     className="px-4 py-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg font-semibold transition-all flex items-center gap-2"
                   >
-                    <LogOut size={16} /> Logout
+                    <LogOut size={16} /> {t.navLogout}
                   </button>
                 </div>
               ) : (
@@ -570,7 +693,7 @@ const PortfolioHome = () => {
                   prefetch={true}
                   className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all flex items-center gap-2"
                 >
-                  <LogIn size={16} /> Login
+                  <LogIn size={16} /> {t.navLogin}
                 </Link>
               )}
 
@@ -628,7 +751,7 @@ const PortfolioHome = () => {
                         }}
                         className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all ${activeSection === item.name ? (dark ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30" : "bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 border border-purple-500/20") : dark ? "text-gray-200 hover:bg-gray-800" : "text-gray-700 hover:bg-gray-100"}`}
                       >
-                        {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                        {navLabel(item.name)}
                       </button>
                     ) : (
                       <Link
@@ -637,7 +760,7 @@ const PortfolioHome = () => {
                         onClick={() => setIsMenuOpen(false)}
                         className={`block w-full px-4 py-3 rounded-xl text-base font-medium transition-all ${dark ? "text-gray-200 hover:bg-gray-800" : "text-gray-700 hover:bg-gray-100"}`}
                       >
-                        {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                        {navLabel(item.name)}
                       </Link>
                     )}
                   </div>
@@ -655,7 +778,7 @@ const PortfolioHome = () => {
                     onClick={() => setIsMenuOpen(false)}
                     className="flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/20"
                   >
-                    <LayoutDashboard size={18} /> Dashboard
+                    <LayoutDashboard size={18} /> {t.navDashboard}
                   </Link>
                   <button
                     onClick={() => {
@@ -664,7 +787,7 @@ const PortfolioHome = () => {
                     }}
                     className="flex items-center justify-center gap-2 py-3 border border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-semibold transition-all"
                   >
-                    <LogOut size={18} /> Logout
+                    <LogOut size={18} /> {t.navLogout}
                   </button>
                 </div>
               ) : (
@@ -786,23 +909,22 @@ const PortfolioHome = () => {
                   icon: Code,
                   color: dark ? "bg-purple-500/20" : "bg-purple-100",
                   iconColor: "text-purple-400",
-                  label: "Stack Focus",
-                  value:
-                    "MERN Stack • Next.js • TypeScript • Prisma • PostgreSQL",
+                  label: t.statStackFocus,
+                  value: t.statStackFocusValue,
                 },
                 {
                   icon: Briefcase,
                   color: dark ? "bg-pink-500/20" : "bg-pink-100",
                   iconColor: "text-pink-400",
-                  label: "Experience",
-                  value: "3 Years",
+                  label: t.statExperience,
+                  value: t.statExperienceValue,
                 },
                 {
                   icon: Award,
                   color: dark ? "bg-blue-500/20" : "bg-blue-100",
                   iconColor: "text-blue-400",
-                  label: "Projects",
-                  value: "10+ Completed",
+                  label: t.statProjects,
+                  value: t.statProjectsValue,
                 },
               ].map((stat, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -907,26 +1029,26 @@ const PortfolioHome = () => {
               {[
                 {
                   icon: Code,
-                  title: "Clean Code",
-                  desc: "Writing maintainable and scalable code",
+                  title: t.cardCleanCodeTitle,
+                  desc: t.cardCleanCodeDesc,
                   color: "from-purple-500 to-purple-600",
                 },
                 {
                   icon: Briefcase,
-                  title: "Problem Solver",
-                  desc: "Analytical thinking for complex challenges",
+                  title: t.cardProblemSolverTitle,
+                  desc: t.cardProblemSolverDesc,
                   color: "from-pink-500 to-pink-600",
                 },
                 {
                   icon: Award,
-                  title: "Fast Learner",
-                  desc: "Swiftly mastering new frameworks and tools",
+                  title: t.cardFastLearnerTitle,
+                  desc: t.cardFastLearnerDesc,
                   color: "from-blue-500 to-blue-600",
                 },
                 {
                   icon: Star,
-                  title: "Team Enthusiast",
-                  desc: "Collaborative and communicative",
+                  title: t.cardTeamTitle,
+                  desc: t.cardTeamDesc,
                   color: "from-green-500 to-green-600",
                 },
               ].map((item, index) => (
@@ -1039,7 +1161,7 @@ const PortfolioHome = () => {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                title: "Frontend",
+                title: t.catFrontend,
                 color: dark
                   ? "from-purple-900/50 to-slate-900/50"
                   : "from-purple-50 to-white",
@@ -1047,7 +1169,7 @@ const PortfolioHome = () => {
                 techs: ["React", "Next.js", "TypeScript", "Tailwind", "Redux"],
               },
               {
-                title: "Backend",
+                title: t.catBackend,
                 color: dark
                   ? "from-pink-900/50 to-slate-900/50"
                   : "from-pink-50 to-white",
@@ -1061,7 +1183,7 @@ const PortfolioHome = () => {
                 ],
               },
               {
-                title: "DevOps & Tools",
+                title: t.catDevOps,
                 color: dark
                   ? "from-blue-900/50 to-slate-900/50"
                   : "from-blue-50 to-white",
@@ -1351,7 +1473,7 @@ const PortfolioHome = () => {
               prefetch={true}
               className="inline-flex items-center gap-2 px-8 py-3 border-2 border-purple-500 rounded-full font-semibold hover:bg-purple-500/10 transition-all"
             >
-              <BookOpen size={20} /> View All Projects
+              <BookOpen size={20} /> {t.viewAllProjects}
             </Link>
           </div>
         </div>
@@ -1490,7 +1612,7 @@ const PortfolioHome = () => {
                 prefetch={true}
                 className="inline-flex items-center gap-2 px-8 py-3 border-2 border-purple-500 rounded-full font-semibold hover:bg-purple-500/10 transition-all"
               >
-                <BookOpen size={20} /> View All Blogs
+                <BookOpen size={20} /> {t.viewAllBlogs}
               </Link>
             </div>
           </div>
@@ -1520,22 +1642,22 @@ const PortfolioHome = () => {
             {[
               {
                 icon: Mail,
-                title: "Email",
+                title: t.contactEmail,
                 value: "jewelsaha072@email.com",
                 href: "mailto:jewelsaha072@email.com",
                 color: "from-purple-500 to-purple-600",
               },
               {
                 icon: Phone,
-                title: "Phone",
+                title: t.contactPhone,
                 value: "+81 80 5052 6822",
                 href: "tel:+818050526822",
                 color: "from-pink-500 to-pink-600",
               },
               {
                 icon: Linkedin,
-                title: "LinkedIn",
-                value: "Connect with me",
+                title: t.contactLinkedInTitle,
+                value: t.contactLinkedInValue,
                 href: "https://www.linkedin.com/in/sahajewelkumar",
                 color: "from-blue-500 to-blue-600",
               },
@@ -1574,35 +1696,35 @@ const PortfolioHome = () => {
                   type="text"
                   name="name"
                   required
-                  placeholder="Your Name"
+                  placeholder={t.formName}
                   className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all ${dark ? "bg-slate-900/50 border border-purple-500/30 text-white" : "bg-white border border-purple-300 text-gray-900"}`}
                 />
                 <input
                   type="email"
                   name="email"
                   required
-                  placeholder="Your Email"
+                  placeholder={t.formEmail}
                   className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all ${dark ? "bg-slate-900/50 border border-purple-500/30 text-white" : "bg-white border border-purple-300 text-gray-900"}`}
                 />
               </div>
               <input
                 type="text"
                 name="subject"
-                placeholder="Subject"
+                placeholder={t.formSubject}
                 className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all ${dark ? "bg-slate-900/50 border border-purple-500/30 text-white" : "bg-white border border-purple-300 text-gray-900"}`}
               />
               <textarea
                 name="message"
                 required
                 rows={5}
-                placeholder="Your Message"
+                placeholder={t.formMessage}
                 className={`w-full px-4 py-3 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-all resize-none ${dark ? "bg-slate-900/50 border border-purple-500/30 text-white" : "bg-white border border-purple-300 text-gray-900"}`}
               />
               <button
                 type="submit"
                 className="w-full px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center justify-center gap-2"
               >
-                Send Message <ArrowRight size={20} />
+                {t.formSend} <ArrowRight size={20} />
               </button>
             </form>
             {result && (
@@ -1629,33 +1751,32 @@ const PortfolioHome = () => {
               <p
                 className={`leading-relaxed ${dark ? "text-gray-300" : "text-gray-600"}`}
               >
-                Building exceptional digital experiences with passion and
-                precision.
+                {t.footerTagline}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <h4 className="font-semibold mb-4">{t.footerQuickLinks}</h4>
               <div className="space-y-2">
                 {[
-                  "About",
-                  "Skills",
-                  "Journey",
-                  "Projects",
-                  ...(BLOGS_ENABLED ? ["Blogs"] : []),
-                  "Contact",
+                  "about",
+                  "skills",
+                  "journey",
+                  "projects",
+                  ...(BLOGS_ENABLED ? ["blogs"] : []),
+                  "contact",
                 ].map((link) => (
                   <button
                     key={link}
-                    onClick={() => scrollToSection(link.toLowerCase())}
+                    onClick={() => scrollToSection(link)}
                     className={`block transition-colors ${dark ? "text-gray-300 hover:text-purple-400" : "text-gray-700 hover:text-purple-600"}`}
                   >
-                    {link}
+                    {navLabel(link)}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Connect</h4>
+              <h4 className="font-semibold mb-4">{t.footerConnect}</h4>
               <div className="flex gap-4">
                 {[
                   { icon: Github, href: "https://github.com/Sahajewel" },
@@ -1688,7 +1809,7 @@ const PortfolioHome = () => {
           <div
             className={`border-t pt-8 text-center ${dark ? "border-purple-500/20 text-gray-300" : "border-purple-200 text-gray-600"}`}
           >
-            <p>© 2026 saha jewel kumar. All rights reserved.</p>
+            <p>{t.footerRights}</p>
           </div>
         </div>
       </footer>
