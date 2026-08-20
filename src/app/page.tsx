@@ -124,7 +124,10 @@ const T = {
       "Full Stack Developer | Building Scalable, High-Performance Web Applications",
     heroDesc:
       "I specialize in developing modern web applications using Next.js, TypeScript, Prisma, and PostgreSQL, focusing on clean architecture, robust backend systems, and intuitive frontend experiences that solve real-world problems.",
-    // downloadEnglishResume: "Download English Resume",
+    downloadEnglishResume: "Download English Resume",
+
+    downloadJapaneseResume: " Download Japanese Resume",
+
     letsTalk: "Let's Talk",
     aboutTitle: "About Me",
     aboutSub: "Get to know me better",
@@ -216,7 +219,9 @@ const T = {
       "フルスタックデベロッパー ｜ スケーラブルで高性能なWebアプリケーションを構築",
     heroDesc:
       "Next.js、TypeScript、Prisma、PostgreSQLを用いたモダンなWebアプリケーション開発を専門としています。クリーンなアーキテクチャ、堅牢なバックエンドシステム、そして実際の課題を解決する直感的なフロントエンド体験の構築を重視しています。",
-    // downloadJapaneseResume: "日本語の履歴書をダウンロード",
+    downloadJapaneseResume: "日本語の履歴書をダウンロード",
+    downloadEnglishResume: "英語の履歴書をダウンロード",
+
     letsTalk: "お話ししましょう",
     aboutTitle: "自己紹介",
     aboutSub: "私についてもっと知る",
@@ -303,7 +308,7 @@ const journeyJP: Record<
   string,
   { description: string; achievements: string[]; badge?: string }
 > = {
-  土木工学の学士号: {
+  "B.Sc. in Civil Engineering": {
     description:
       "ソフトウェア開発へ転向する前に、構造的な論理思考とプロジェクト管理の強固な基盤を築きました。",
     achievements: [
@@ -312,7 +317,7 @@ const journeyJP: Record<
     ],
     badge: "エンジニアリングで培った問題解決力をコーディングにも応用",
   },
-  "ウェブ開発 (レベル 1)": {
+  "Web Development (Level 1)": {
     description:
       "レスポンシブでインタラクティブなユーザーインターフェースの構築に重点を置いた、Web開発の基礎を習得。",
     achievements: [
@@ -321,7 +326,7 @@ const journeyJP: Record<
       "永続的なデータ保存のためMongoDBを統合",
     ],
   },
-  "フルスタック開発 レベル2": {
+  "Full Stack Development (Level 2)": {
     description:
       "プロフェッショナルなワークフローとスケーラビリティに重点を置き、高度なフルスタック開発を深く学習。",
     achievements: [
@@ -861,7 +866,7 @@ const PortfolioHome = () => {
               >
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
-                  Download English Resume
+                  {t.downloadEnglishResume}
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
@@ -876,7 +881,7 @@ const PortfolioHome = () => {
               >
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
-                  日本語の履歴書をダウンロード
+                  {t.downloadJapaneseResume}
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
@@ -1514,7 +1519,7 @@ const PortfolioHome = () => {
                 </span>
               </h2>
               <p className={dark ? "text-gray-300" : "text-gray-600"}>
-                {T.latestSub}
+                {t.latestSub}
               </p>
             </div>
 
