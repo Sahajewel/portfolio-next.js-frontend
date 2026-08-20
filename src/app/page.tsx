@@ -306,9 +306,10 @@ const T = {
 
 const journeyJP: Record<
   string,
-  { description: string; achievements: string[]; badge?: string }
+  { title: string; description: string; achievements: string[]; badge?: string }
 > = {
   "B.Sc. in Civil Engineering": {
+    title: "土木工学　学士",
     description:
       "ソフトウェア開発へ転向する前に、構造的な論理思考とプロジェクト管理の強固な基盤を築きました。",
     achievements: [
@@ -318,6 +319,7 @@ const journeyJP: Record<
     badge: "エンジニアリングで培った問題解決力をコーディングにも応用",
   },
   "Web Development (Level 1)": {
+    title: "Web開発（レベル1）",
     description:
       "レスポンシブでインタラクティブなユーザーインターフェースの構築に重点を置いた、Web開発の基礎を習得。",
     achievements: [
@@ -327,6 +329,7 @@ const journeyJP: Record<
     ],
   },
   "Full Stack Development (Level 2)": {
+    title: "フルスタック開発（レベル2）",
     description:
       "プロフェッショナルなワークフローとスケーラビリティに重点を置き、高度なフルスタック開発を深く学習。",
     achievements: [
@@ -337,11 +340,16 @@ const journeyJP: Record<
     badge: "Next.js（Server Components、Server Actions）を習得",
   },
   "Professional Web Development — Certificate": {
+    title: "プロフェッショナルWeb開発　修了証",
     description:
       "本番運用可能なレベルのMERN＆Next.js開発者になるべく、1年間集中的に取り組みました。",
     achievements: ["厳格なトレーニングを通じてMERN＆Next.jsスタックを習得"],
     badge: "1年間の集中トレーニングを修了、実用規模のアプリを構築",
   },
+};
+
+const locationJP: Record<string, string> = {
+  Remote: "リモート",
 };
 
 const philosophyStripJP = [
@@ -1281,7 +1289,9 @@ const PortfolioHome = () => {
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
                         <div>
                           <h3 className="text-2xl font-bold mb-1">
-                            {item.title}
+                            {lang === "jp"
+                              ? (journeyJP[item.title]?.title ?? item.title)
+                              : item.title}
                           </h3>
                           <p className="text-xl text-purple-400 font-semibold">
                             {item.org}
@@ -1299,7 +1309,11 @@ const PortfolioHome = () => {
                               className={`flex items-center gap-2 ${dark ? "text-gray-300" : "text-gray-600"}`}
                             >
                               <MapPin size={16} />
-                              <span>{item.location}</span>
+                              <span>
+                                {lang === "jp"
+                                  ? (locationJP[item.location] ?? item.location)
+                                  : item.location}
+                              </span>
                             </div>
                           )}
                         </div>
