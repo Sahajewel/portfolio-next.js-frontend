@@ -118,11 +118,13 @@ const T = {
     heroTag: "Exploring New Frontiers",
     heroHiIm: "Hi, I'm",
     name: "Saha Jewel Kumar",
+    latest: "  Latest Blogs",
+    latestSub: "Thoughts and tutorials I've shared",
     heroTitle:
       "Full Stack Developer | Building Scalable, High-Performance Web Applications",
     heroDesc:
       "I specialize in developing modern web applications using Next.js, TypeScript, Prisma, and PostgreSQL, focusing on clean architecture, robust backend systems, and intuitive frontend experiences that solve real-world problems.",
-    downloadResume: "Download Resume",
+    // downloadEnglishResume: "Download English Resume",
     letsTalk: "Let's Talk",
     aboutTitle: "About Me",
     aboutSub: "Get to know me better",
@@ -208,11 +210,13 @@ const T = {
     heroTag: "新たな挑戦を探求中",
     heroHiIm: "はじめまして、",
     name: "サハ　ジュエル　クマル",
+    latest: "最新の記事",
+    latestSub: "共有したい思考とガイド",
     heroTitle:
       "フルスタックデベロッパー ｜ スケーラブルで高性能なWebアプリケーションを構築",
     heroDesc:
       "Next.js、TypeScript、Prisma、PostgreSQLを用いたモダンなWebアプリケーション開発を専門としています。クリーンなアーキテクチャ、堅牢なバックエンドシステム、そして実際の課題を解決する直感的なフロントエンド体験の構築を重視しています。",
-    downloadResume: "履歴書をダウンロード",
+    // downloadJapaneseResume: "日本語の履歴書をダウンロード",
     letsTalk: "お話ししましょう",
     aboutTitle: "自己紹介",
     aboutSub: "私についてもっと知る",
@@ -291,7 +295,7 @@ const T = {
     footerTagline: "情熱と精密さで、優れたデジタル体験を構築します。",
     footerQuickLinks: "クイックリンク",
     footerConnect: "つながる",
-    footerRights: "© 2026 サハ ジュエルクマル．All rights reserved.",
+    footerRights: "© 2026 サハ ジュエルクマル．全著作権所有",
   },
 } as const;
 
@@ -299,7 +303,7 @@ const journeyJP: Record<
   string,
   { description: string; achievements: string[]; badge?: string }
 > = {
-  "B.Sc. in Civil Engineering": {
+  土木工学の学士号: {
     description:
       "ソフトウェア開発へ転向する前に、構造的な論理思考とプロジェクト管理の強固な基盤を築きました。",
     achievements: [
@@ -308,7 +312,7 @@ const journeyJP: Record<
     ],
     badge: "エンジニアリングで培った問題解決力をコーディングにも応用",
   },
-  "Web Development (Level 1)": {
+  "ウェブ開発 (レベル 1)": {
     description:
       "レスポンシブでインタラクティブなユーザーインターフェースの構築に重点を置いた、Web開発の基礎を習得。",
     achievements: [
@@ -317,7 +321,7 @@ const journeyJP: Record<
       "永続的なデータ保存のためMongoDBを統合",
     ],
   },
-  "Full Stack Development (Level 2)": {
+  "フルスタック開発 レベル2": {
     description:
       "プロフェッショナルなワークフローとスケーラビリティに重点を置き、高度なフルスタック開発を深く学習。",
     achievements: [
@@ -857,7 +861,7 @@ const PortfolioHome = () => {
               >
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
-                  {t.downloadResume}
+                  Download English Resume
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
@@ -872,7 +876,7 @@ const PortfolioHome = () => {
               >
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
-                  {t.downloadResume}
+                  日本語の履歴書をダウンロード
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
@@ -1506,11 +1510,11 @@ const PortfolioHome = () => {
             <div className="text-center mb-12">
               <h2 className="text-5xl md:text-6xl font-bold mb-4">
                 <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                  Latest Blogs
+                  {t.latest}
                 </span>
               </h2>
               <p className={dark ? "text-gray-300" : "text-gray-600"}>
-                Thoughts and tutorials I've shared
+                {T.latestSub}
               </p>
             </div>
 
