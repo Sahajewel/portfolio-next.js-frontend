@@ -117,6 +117,7 @@ const T = {
   en: {
     heroTag: "Exploring New Frontiers",
     heroHiIm: "Hi, I'm",
+    name: "Saha Jewel Kumar",
     heroTitle:
       "Full Stack Developer | Building Scalable, High-Performance Web Applications",
     heroDesc:
@@ -206,6 +207,7 @@ const T = {
   jp: {
     heroTag: "新たな挑戦を探求中",
     heroHiIm: "はじめまして、",
+    name: "サハ　ジュエル　クマル",
     heroTitle:
       "フルスタックデベロッパー ｜ スケーラブルで高性能なWebアプリケーションを構築",
     heroDesc:
@@ -827,7 +829,7 @@ const PortfolioHome = () => {
                 {t.heroHiIm}
               </span>
               <span className="block bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
-                Saha Jewel Kumar
+                {t.name}
               </span>
             </h1>
 
@@ -849,6 +851,21 @@ const PortfolioHome = () => {
             <div className="flex flex-wrap gap-4 pt-4">
               <a
                 href="/resume.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                download="Saha_Jewel_Resume.pdf"
+              >
+                <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
+                  <Download size={20} className="group-hover:animate-bounce" />
+                  {t.downloadResume}
+                  <ArrowRight
+                    size={20}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </button>
+              </a>
+              <a
+                href="/japanese_resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 download="Saha_Jewel_Resume.pdf"
