@@ -124,7 +124,7 @@ const T = {
       "Full Stack Developer | Building Scalable, High-Performance Web Applications",
     heroDesc:
       "I specialize in developing modern web applications using Next.js, TypeScript, Prisma, and PostgreSQL, focusing on clean architecture, robust backend systems, and intuitive frontend experiences that solve real-world problems.",
-    downloadEnglishResume: "Download English Resume",
+    downloadEnglishResume: "Download Resume",
 
     downloadJapaneseResume: " Download Japanese Resume",
     downloadJapaneseWorkHistory: " Download Japanese Work History",
@@ -220,8 +220,8 @@ const T = {
       "フルスタックデベロッパー ｜ スケーラブルで高性能なWebアプリケーションを構築",
     heroDesc:
       "Next.js、TypeScript、Prisma、PostgreSQLを用いたモダンなWebアプリケーション開発を専門としています。クリーンなアーキテクチャ、堅牢なバックエンドシステム、そして実際の課題を解決する直感的なフロントエンド体験の構築を重視しています。",
-    downloadJapaneseResume: "日本語の履歴書をダウンロード",
-    downloadJapaneseWorkHistory: "日本語の職務経歴書をダウンロード",
+    downloadJapaneseResume: "履歴書をダウンロード",
+    downloadJapaneseWorkHistory: "職務経歴書をダウンロード",
     downloadEnglishResume: "英語の履歴書をダウンロード",
 
     letsTalk: "お話ししましょう",
