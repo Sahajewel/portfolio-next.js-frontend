@@ -127,6 +127,7 @@ const T = {
     downloadEnglishResume: "Download English Resume",
 
     downloadJapaneseResume: " Download Japanese Resume",
+    downloadJapaneseWorkHistory: " Download Japanese Work History",
 
     letsTalk: "Let's Talk",
     aboutTitle: "About Me",
@@ -220,6 +221,7 @@ const T = {
     heroDesc:
       "Next.js、TypeScript、Prisma、PostgreSQLを用いたモダンなWebアプリケーション開発を専門としています。クリーンなアーキテクチャ、堅牢なバックエンドシステム、そして実際の課題を解決する直感的なフロントエンド体験の構築を重視しています。",
     downloadJapaneseResume: "日本語の履歴書をダウンロード",
+    downloadJapaneseWorkHistory: "日本語の職務経歴書をダウンロード",
     downloadEnglishResume: "英語の履歴書をダウンロード",
 
     letsTalk: "お話ししましょう",
@@ -866,6 +868,39 @@ const PortfolioHome = () => {
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
+              {/* japanese resume */}
+              <a
+                href="/履歴書.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                download="Saha_Jewel_Resume.pdf"
+              >
+                <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
+                  <Download size={20} className="group-hover:animate-bounce" />
+                  {t.downloadJapaneseResume}
+                  <ArrowRight
+                    size={20}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </button>
+                {/* japanese work history */}
+              </a>
+              <a
+                href="/職務経歴書.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                download="Saha_Jewel_Resume.pdf"
+              >
+                <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
+                  <Download size={20} className="group-hover:animate-bounce" />
+                  {t.downloadJapaneseWorkHistory}
+                  <ArrowRight
+                    size={20}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </button>
+              </a>
+              {/* english resume */}
               <a
                 href="/resume.pdf"
                 target="_blank"
@@ -875,21 +910,6 @@ const PortfolioHome = () => {
                 <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
                   <Download size={20} className="group-hover:animate-bounce" />
                   {t.downloadEnglishResume}
-                  <ArrowRight
-                    size={20}
-                    className="group-hover:translate-x-1 transition-transform"
-                  />
-                </button>
-              </a>
-              <a
-                href="/japanese_resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                download="Saha_Jewel_Resume.pdf"
-              >
-                <button className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full font-semibold text-white hover:shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 flex items-center gap-2">
-                  <Download size={20} className="group-hover:animate-bounce" />
-                  {t.downloadJapaneseResume}
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
